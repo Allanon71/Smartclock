@@ -1,0 +1,1066 @@
+;----------------------------------------
+;  7 Segments Display
+;----------------------------------------
+
+; Library Root
+Global dw = {}
+
+; Description of the 7 Segments Display
+/*     0a
+      +----+
+    5f|    | 1b
+      |  6g|
+      +----+
+    4e|    | 2c
+      |    |
+      +----+
+         3d
+        
+     ________
+    /w1    w2\w3
+    \________/
+    
+*/
+
+; Settings for the 7 segments display
+dw.seg7 =
+  { vert = 7,                      ; Vertices count
+    d  = 2,                        ; Distance
+    h  = 4,                        ; Horiz. segment's half-height
+    w1 = 6 }                       ; Horiz. segment's edge width
+dw.seg7.w2 = dw.seg7.w1*5          ; Horiz. segment's central width
+dw.seg7.w3 = dw.seg7.w2+dw.seg7.w1 ; Horiz. segment's width 3
+dw.seg7.poly =                     ; Horiz. segment's polygon
+  { 0, 0,  
+    dw.seg7.w1, -dw.seg7.h,
+    dw.seg7.w2, -dw.seg7.h,
+    dw.seg7.w3, 0,
+    dw.seg7.w2, dw.seg7.h,
+    dw.seg7.w1, dw.seg7.h,
+    0, 0 }
+
+; Definition of all supported characters, you can define as many as 
+; you need
+dw.seg7.chars = {}
+dw.seg7.chars[Asc("0")] = ToNumber("0111111", 2)
+dw.seg7.chars[Asc("1")] = ToNumber("0000110", 2)
+dw.seg7.chars[Asc("2")] = ToNumber("1011011", 2)
+dw.seg7.chars[Asc("3")] = ToNumber("1001111", 2)
+dw.seg7.chars[Asc("4")] = ToNumber("1100110", 2)
+dw.seg7.chars[Asc("5")] = ToNumber("1101101", 2)
+dw.seg7.chars[Asc("6")] = ToNumber("1111101", 2)
+dw.seg7.chars[Asc("7")] = ToNumber("0000111", 2)
+dw.seg7.chars[Asc("8")] = ToNumber("1111111", 2)
+dw.seg7.chars[Asc("9")] = ToNumber("1101111", 2)
+
+dw.seg7.chars[Asc("A")] = ToNumber("1110111", 2)
+dw.seg7.chars[Asc("À")] = ToNumber("1110111", 2)
+dw.seg7.chars[Asc("a")] = ToNumber("1011111", 2)
+dw.seg7.chars[Asc("à")] = ToNumber("1011111", 2)
+dw.seg7.chars[Asc("B")] = ToNumber("1111111", 2)
+dw.seg7.chars[Asc("b")] = ToNumber("1111100", 2)
+dw.seg7.chars[Asc("C")] = ToNumber("0111001", 2)
+dw.seg7.chars[Asc("c")] = ToNumber("1011000", 2)
+dw.seg7.chars[Asc("D")] = ToNumber("0111111", 2)
+dw.seg7.chars[Asc("d")] = ToNumber("1011110", 2)
+dw.seg7.chars[Asc("E")] = ToNumber("1111001", 2)
+dw.seg7.chars[Asc("È")] = ToNumber("1111001", 2)
+dw.seg7.chars[Asc("e")] = ToNumber("1111011", 2)
+dw.seg7.chars[Asc("è")] = ToNumber("1111011", 2)
+dw.seg7.chars[Asc("F")] = ToNumber("1110001", 2)
+dw.seg7.chars[Asc("f")] = ToNumber("1110001", 2)
+dw.seg7.chars[Asc("G")] = ToNumber("0111101", 2)
+dw.seg7.chars[Asc("g")] = ToNumber("1101111", 2)
+dw.seg7.chars[Asc("H")] = ToNumber("1110110", 2)
+dw.seg7.chars[Asc("h")] = ToNumber("1110100", 2)
+dw.seg7.chars[Asc("I")] = ToNumber("0110000", 2)
+dw.seg7.chars[Asc("Ì")] = ToNumber("0110000", 2)
+dw.seg7.chars[Asc("i")] = ToNumber("0010000", 2)
+dw.seg7.chars[Asc("ì")] = ToNumber("0010000", 2)
+dw.seg7.chars[Asc("J")] = ToNumber("0011110", 2)
+dw.seg7.chars[Asc("j")] = ToNumber("0011110", 2)
+dw.seg7.chars[Asc("K")] = ToNumber("1110101", 2)
+dw.seg7.chars[Asc("k")] = ToNumber("1110101", 2)
+dw.seg7.chars[Asc("L")] = ToNumber("0111000", 2)
+dw.seg7.chars[Asc("l")] = ToNumber("0110000", 2)
+dw.seg7.chars[Asc("M")] = ToNumber("1010101", 2)
+dw.seg7.chars[Asc("m")] = ToNumber("1010101", 2)
+dw.seg7.chars[Asc("N")] = ToNumber("1010100", 2)
+dw.seg7.chars[Asc("n")] = ToNumber("1010100", 2)
+dw.seg7.chars[Asc("O")] = ToNumber("0111111", 2)
+dw.seg7.chars[Asc("o")] = ToNumber("1011100", 2)
+dw.seg7.chars[Asc("Ò")] = ToNumber("0111111", 2)
+dw.seg7.chars[Asc("ò")] = ToNumber("1011100", 2)
+dw.seg7.chars[Asc("P")] = ToNumber("1110011", 2)
+dw.seg7.chars[Asc("p")] = ToNumber("1110011", 2)
+dw.seg7.chars[Asc("Q")] = ToNumber("1100111", 2)
+dw.seg7.chars[Asc("q")] = ToNumber("1100111", 2)
+dw.seg7.chars[Asc("r")] = ToNumber("1010000", 2)
+dw.seg7.chars[Asc("R")] = ToNumber("1110111", 2)
+dw.seg7.chars[Asc("S")] = ToNumber("1101101", 2)
+dw.seg7.chars[Asc("s")] = ToNumber("1101101", 2)
+dw.seg7.chars[Asc("T")] = ToNumber("1111000", 2)
+dw.seg7.chars[Asc("t")] = ToNumber("1111000", 2)
+dw.seg7.chars[Asc("U")] = ToNumber("0111110", 2)
+dw.seg7.chars[Asc("u")] = ToNumber("0011100", 2)
+dw.seg7.chars[Asc("Ù")] = ToNumber("0011100", 2)
+dw.seg7.chars[Asc("ù")] = ToNumber("0011100", 2)
+dw.seg7.chars[Asc("V")] = ToNumber("0110010", 2)
+dw.seg7.chars[Asc("v")] = ToNumber("0110010", 2)
+dw.seg7.chars[Asc("W")] = ToNumber("0101010", 2)
+dw.seg7.chars[Asc("w")] = ToNumber("0101010", 2)
+dw.seg7.chars[Asc("X")] = ToNumber("1110110", 2)
+dw.seg7.chars[Asc("x")] = ToNumber("1110110", 2)
+dw.seg7.chars[Asc("Y")] = ToNumber("1101110", 2)
+dw.seg7.chars[Asc("y")] = ToNumber("1101110", 2)
+dw.seg7.chars[Asc("Z")] = ToNumber("1001011", 2)
+dw.seg7.chars[Asc("z")] = ToNumber("1001011", 2)
+dw.seg7.chars[Asc(" ")] = ToNumber("0000000", 2)
+
+; Here are some custom characters binded to unused
+; characters
+dw.seg7.chars[196] = ToNumber("1000000", 2) ; Middle horizontal line
+dw.seg7.chars[197] = ToNumber("0100000", 2) ; Top vertical left
+dw.seg7.chars[198] = ToNumber("0010000", 2) ; Bottom vertical left
+dw.seg7.chars[199] = ToNumber("0001000", 2) ; Bottom horizontal
+dw.seg7.chars[200] = ToNumber("0000100", 2) ; Bottom vertical right
+dw.seg7.chars[201] = ToNumber("0000010", 2) ; Top vertical right
+dw.seg7.chars[202] = ToNumber("0000001", 2) ; Top horizontal
+
+Function dw.seg7.drawSegments(args)
+  ; Used to draw a display using a bitmask to address
+  ; any of the available segments freely.
+  ;
+  ; Args:
+  ;   x, y      : Position
+  ;   scale     : Scale factor
+  ;   colorOn   : On Color
+  ;   colorOff  : Off Color
+  ;   edgeColor : Edge Color
+  ;   edgeSize  : Edge Size
+  ;   segments  : Bitmasked segments
+  ;   
+  ;   Segments encoding, look at the top of the source to see
+  ;   which letter is associated with each segment
+  ;   bit : 6543210
+  ;   seg : gfedcba
+  ; ----------------------------------------------------
+  ; We will draw filled, antialiased and edged polygons
+  SetFillStyle(#FILLCOLOR)
+  SetFormStyle(#ANTIALIAS)
+  SetFormStyle(#EDGE, args.edgeColor, Int(args.edgeSize*args.scale))
+  
+  ; Scale the polygons
+  Local w1 = (dw.seg7.w3-dw.seg7.h/2)*args.scale
+  Local w2 = (dw.seg7.w3+dw.seg7.w1/2)*args.scale
+  Local w3 = dw.seg7.w1/2*args.scale
+  
+  Local toRight = dw.seg7.w3*args.scale
+  Local toDown1 = dw.seg7.w3/2*args.scale
+  Local toDown2 = toDown1+toRight
+  Local toDown3 = toRight*2
+  Local toDown4 = toRight
+  Local d       = dw.seg7.d*args.scale
+  Local d2      = d*2
+  Local dm      = d*3/2
+
+  ; Functions to draw each segment
+  Local funcs =
+  { [0] = Function(col) ; 0:a Horizontal Top
+            Polygon(args.x, args.y, dw.seg7.poly, dw.seg7.vert, col, { ScaleX = args.Scale, ScaleY = args.Scale, AnchorX = 0, AnchorY = 0.5 } )
+          EndFunction,
+    [1] = Function(col) ; 1:b Vertical top-right
+            Polygon(args.x+toRight+d, args.y+toDown1+d, dw.seg7.poly, dw.seg7.vert, col, { ScaleX = args.Scale, Rotate = 90, ScaleY = args.Scale, AnchorX = 0.5, AnchorY = 0.5 })
+          EndFunction,
+    [2] = Function(col) ; 2:c Vertical bottom-right
+            Polygon(args.x+toRight+d, args.y+toDown2+d2, dw.seg7.poly, dw.seg7.vert, col, { ScaleX = args.Scale, Rotate = 90, ScaleY = args.Scale, AnchorX = 0.5, AnchorY = 0.5 })
+          EndFunction,
+    [3] = Function(col) ; 3:d Horizntal bottom
+            Polygon(args.x, args.y+toDown3+d*3, dw.seg7.poly, dw.seg7.vert, col, { ScaleX = args.Scale, ScaleY = args.Scale, AnchorX = 0, AnchorY = 0.5 } )
+          EndFunction,
+    [4] = Function(col) ; 4:e Vertical bottom-left
+            Polygon(args.x-d, args.y+toDown2+d2, dw.seg7.poly, dw.seg7.vert, col, { ScaleX = args.Scale, Rotate = 90, ScaleY = args.Scale, AnchorX = 0.5, AnchorY = 0.5 })
+          EndFunction,
+    [5] = Function(col) ; 5:f Vertical top-left
+            Polygon(args.x-d, args.y+toDown1+d, dw.seg7.poly, dw.seg7.vert, col, { ScaleX = args.Scale, Rotate = 90, ScaleY = args.Scale, AnchorX = 0.5, AnchorY = 0.5 })
+          EndFunction,
+    [6] = Function(col) ; 6:g Horizontal middle
+            Polygon(args.x, args.y+toDown4+dm, dw.seg7.poly, dw.seg7.vert, col, { ScaleX = args.Scale, ScaleY = args.Scale, AnchorX = 0, AnchorY = 0.5 } )
+          EndFunction,
+          }
+
+  ; Test bitmask & draw segments
+  For Local b = 0 To 6
+    Local fillCol = args.colorOff
+    If BitTest(args.segments, b)
+      fillCol = args.colorOn
+    EndIf
+    funcs[b](fillCol)
+  Next
+
+EndFunction
+
+Function dw.seg7.drawChar(args)
+  ; Draw a character in the 7 segments display, the character
+  ; must be defined in the dw.seg7.chars table otherwise it will
+  ; be converted into a space character.
+  ;
+  ; args
+  ;   x, y     : Position
+  ;   scale    : Scale factor
+  ;   colorOn  : On Color
+  ;   colorOff : Off Color
+  ;   character: character to show
+  ; ------------------------------------
+  
+  Local a = Asc(args.character)
+  If TB.Item.IsNil(dw.seg7.chars, a)
+    a = 32 ; Space
+  EndIf
+  
+  args.segments = dw.seg7.chars[a]
+
+  dw.seg7.drawSegments(args)
+
+EndFunction
+
+Function dw.seg7.drawText(args)
+  ; Draw a string into one ore more 7 segments display,
+  ; you can define how many characters to display using the
+  ; 'length' argument.
+  ; Any undefined character will be converted into a space.
+  ; 'distance' is used to separate each 7 segments display block.
+  ;
+  ; args
+  ;   x, y     : Position
+  ;   scale    : Scale factor
+  ;   colorOn  : On Color
+  ;   colorOff : Off Color
+  ;   text     : character to show
+  ;   length   : how many characters
+  ;   distance : display distance %
+
+  Local args = CopyTable(args)
+  Local l = StrLen(args.text)
+  Local c = args.length
+  
+  For Local p = 0 To l
+    If p >= args.length Then Break
+    Local char = MidStr(args.text, p, 1)
+    If Asc(char) = 0 Then char = " "
+    args.character = char
+    dw.seg7.drawChar(args)
+    args.x = args.x + dw.seg7.w3*args.scale*args.distance
+  Next
+  
+EndFunction
+
+
+;--------------------------------------------------------------------
+; SEG7 BLOCKOBJ
+;   This object is used to handle easily 7 segments displays
+;--------------------------------------------------------------------
+dw.seg7.blockObj =
+  { value    = dw.seg7.chars[Asc("0")],         ; Default character is 0
+    position = { x = 50, y = 50 },              ; Default position
+    scale    = 1,                               ; Default scale
+    colors   = { On = $ff6600,                  ; Default colors
+                 Off = $220000, 
+                 edge = $110000 },
+    edgeSize = 1                                ; Default edge size
+    }
+
+
+Function dw.seg7.blockObj.new()
+  ; Create a new block object with a single 7 segments display
+  ; The object is created using the default parameters.
+  
+  Return(CopyTable(dw.seg7.blockObj))
+  
+EndFunction
+
+Function dw.seg7.blockObj:draw()
+  ; Draw the seg7 block object using its own parameters
+  
+  dw.seg7.drawSegments(
+  { x         = self.position.x, 
+    y         = self.position.y,
+    scale     = self.scale,
+    colorOn   = self.colors.on,
+    colorOff  = self.colors.off,
+    edgeColor = self.colors.edge,
+    edgeSize  = self.edgeSize,
+    segments  = self.value
+    })
+    
+EndFunction
+
+Function dw.seg7.blockObj:setChar(char, redraw)
+  ; Set the seg7 block object current characters and
+  ; optionally redraws it.
+  ; The redraw will be performed only if the current
+  ; value is changed.
+
+  Local a = Asc(ToString(char))
+
+  If Not(HaveItem(dw.seg7.chars, a))
+    a = 32 ; Space
+  EndIf
+
+  If self.value = dw.seg7.chars[a] Then Return()
+  
+  self.value = dw.seg7.chars[a]
+  
+  If redraw Then self:draw()
+  
+EndFunction
+
+Function dw.seg7.blockObj:setSegments(mask, redraw)
+  ; Set the seg7 block object using a bitmask to be able
+  ; to address freely any display segment and optionally
+  ; redraw it.
+  ; The redraw will be performed only if the current
+  ; value is changed.
+
+  If self.value = mask Then Return
+  
+  self.value = mask
+  
+  If redraw Then self:draw()
+  
+EndFunction
+
+Function dw.seg7.blockObj:set(args, redraw)
+  ; Changes any of the seg7 block object parameters, you can set one
+  ; or many parameters as you wish.
+  ;
+  
+  ; List of all parameters you can change using this method
+  Local supported = { "value", "position", "scale", "colors", "edgesize" }
+  Local i, v
+  
+  For i, v In Pairs(supported)
+    If HaveItem(args, v) Then self[v] = args[v]
+  Next
+  
+  If redraw Then self:draw()  
+  
+EndFunction
+  
+;--------------------------------------------------------------------
+; SEG7 GROUPOBJ
+;   This object is used to handle easily groups of 7 segments displays
+;--------------------------------------------------------------------
+dw.seg7.groupObj =
+  { value    = "",                              ; String to display
+    position = { x = 50, y = 50 },              ; Group position
+    scale    = 1,                               ; Group scale
+    colors   = { On = $ff6600,                  ; Group colors
+                 Off = $220000, 
+                 edge = $110000 },
+    edgeSize = 1,                               ; Group edge size
+    length   = 1,                               ; How many characters it holds
+    distance = 50,                              ; Distance between eahc element
+    blockObj = { },                             ; List of all blockObjects
+
+    _scrollOffset = 0
+    }
+
+
+Function dw.seg7.groupObj.new(args)
+  ; Create a new group of 7 segments displays
+  ; The object is created using the default parameters combined
+  ; with the ones you specify in args
+  ;
+  ; supported args are
+  ;   .value            String to display
+  ;   .length           How many characters you want to put in the group
+  ;   .distance         Distance between each 7 segments display
+  ;   .position         Position of the group
+  ;   .scale            Scaling factor
+  ;   .colors           Display colors
+  ;   .edgeSize         Edge size of the single segments
+  
+  Local newObj = CopyTable(dw.seg7.groupObj)
+  
+  ; List of all supported parameters you can specify
+  Local supported = { "value", "length", "distance", "position", "scale", "colors", "edgesize" }
+  Local i, v
+  
+  For i, v In Pairs(supported)
+    If HaveItem(args, v) Then newObj[v] = args[v]
+  Next
+  
+  ; Initialize the displays
+  For i = 0 To newObj.length-1
+    Local c = MidStr(newObj.value, i, 1)
+    If c = "" Then c = " "
+    newObj.blockObj[i] = dw.seg7.blockObj.new()
+    newObj.blockObj[i]:set(
+    { value    = 32,
+      position = { x = newObj.position.x + newObj.distance*i, y = newObj.position.y },
+      scale    = newObj.scale,
+      colors   = newObj.colors,
+      edgeSize = newObj.edgeSize
+      },
+    False
+    )
+    newObj.blockObj[i]:setChar(c, True)
+  Next
+    
+  Return(newObj)
+  
+EndFunction
+
+Function dw.seg7.groupObj:draw()
+  ; Redraw the entire object
+  ; Only changed character will be refreshed
+  
+  For Local i = 0 To self.length-1
+    self.blockObj[i]:draw()
+  Next
+  
+EndFunction
+
+Function dw.seg7.groupObj:setValue(value, _ignoreOS)
+  ; Set the string to display
+  
+  self.value = value
+  If Not(_ignoreOS) Then self._scrollOffset = 0
+  For Local i = 0 To self.length-1
+    Local c = MidStr(self.value, i, 1)
+
+    If c = "" Then c = " "
+    self.blockObj[i]:setChar(c, True)
+  Next
+  
+EndFunction
+
+Function dw.seg7.groupObj:scrollLeft(redraw)
+  ; Scroll the display content to the left
+  ; Return True id the text has been wrapped
+  If IsNil(redraw) Then redraw = True
+  
+  Local wrap = False
+  
+  self.value = UnrightStr(self.value, 1) .. LeftStr(self.value, 1)
+  self._scrollOffset = self._scrollOffset + 1
+
+  If self._scrollOffset >= StrLen(self.value)
+    wrap = True
+    self._scrollOffset = 0
+  EndIf
+  
+  self:setValue(self.value, True)
+  If redraw Then self:draw()
+  
+  Return(wrap)
+  
+EndFunction
+
+Function dw.seg7.groupObj:scrollRight(redraw)
+  ; Scroll the display content to the right
+  ; Return True id the text has been wrapped
+  If IsNil(redraw) Then redraw = True
+  Local wrap = False
+  
+  self.value = RightStr(self.value, 1) .. UnleftStr(self.value, 1)
+  self._scrollOffset = self._scrollOffset - 1
+
+  If self._scrollOffset <= -StrLen(self.value)
+    wrap = True
+    self._scrollOffset = 0
+  EndIf
+  
+  self:setValue(self.value, True)
+  If redraw Then self:draw()
+  
+  Return(wrap)
+  
+EndFunction
+
+; -------------------------------------------------------------------
+; TEST CODE
+; -------------------------------------------------------------------
+Function dw.seg7.test()
+  Local sel =
+    ListRequest("SELECT THE TEST",
+                "Please select the test you wish to perform...",
+                { "7 Segments (normal)", 
+                  "7 Segments (blur)" })
+
+  Switch sel
+    Case 0
+      dw.seg7.test_01()
+      
+    Case 1
+      dw.seg7.test_02()
+      
+  EndSwitch
+  
+EndFunction
+
+Function dw.seg7.test_01()
+  ; Test for 7 segments display
+  ; ---------------------------  
+  
+  ; Hit Escape key to quit
+  EscapeQuit(True)
+  
+  ; Build some single 7 segments display for testing
+  ; ------------------------------------------------
+  ; DISPLAY 1
+  Local d1 = dw.seg7.blockObj.new()
+  d1:set({ position = { x = 50, y = 20 }})
+  d1:setChar("0", True)
+
+  ; DISPLAY 2
+  Local d2 = dw.seg7.blockObj.new()
+  d2:set({ position = { x = 110, y = 20 }})
+  d2:setChar("1", True)
+
+  ; DISPLAY 3
+  Local d3 = dw.seg7.blockObj.new()
+  d3:set({ position = { x = 170, y = 20 },
+           colors = { on = $ffff00, off = $202000, edge = $444400 }
+           })
+           
+  d3:setChar("2", True)
+
+  ; DISPLAY 4
+  Local d4 = dw.seg7.blockObj.new()
+  d4:set({ position = { x = 230, y = 45 },
+           colors = { on = $00ff00, off = $002000, edge = $001000 },
+           scale = 0.7 
+           })
+  d4:setChar("-", True)
+
+  ; Create a Group
+  g1 = dw.seg7.groupObj.new(
+  { value  = "123 HELLO   THIS   IS   A   TEST      7SEG     ",
+    length = 15,
+    distance = 40,
+    position = { x = 20, y = 140 },
+    colors = { on = $dd3300, off = $1e0000, edge = $160000 },
+    edgesize = 1,
+    scale = 0.6
+    }
+  )
+  
+  ; Setup some variable to bring some life into the test program
+  ; d : bitmasked value for the d4 display
+  Local d = 0
+  Local scrLeft = True
+  
+  ; Infinite loop until you hit Escape
+  Repeat
+    ; Pick some random value to show in the display blocks
+    Local a, b, c = ToString(Rnd(10)), ToString(Rnd(10)), Rnd(32)+65
+
+    d1:setChar(a, True)       ; Set the character and redraw
+    d2:setChar(b, True)       ; Set the character and redraw
+    d3:setChar(Chr(c), True)  ; Set the character and redraw
+    d4:setSegments(d, True)   ; Sert the mask and redraw
+    d = d + 1                 ; Increase the mask value by 1
+    If d > 128 Then d = 0     ; ...and reset it if > 128
+    
+    If scrLeft
+      If g1:scrollLeft()
+        scrLeft = Not(scrLeft)
+      EndIf
+    Else
+      If g1:scrollRight()
+        scrLeft = Not(scrLeft)
+      EndIf
+    EndIf
+    
+    Wait(150, #MILLISECONDS)    ; Slow down
+
+    
+  Forever
+  
+EndFunction
+
+Function dw.seg7.test_02()
+  ; Test for 7 segments display
+  ; Use double buffer & continuos rendering to achieve
+  ; a blue effect
+  ; ---------------------------  
+  
+  ; Hit Escape key to quit
+  EscapeQuit(True)
+  
+  ; Build some single 7 segments display for testing
+  ; ------------------------------------------------
+  ; DISPLAY 1
+  Local d1 = dw.seg7.blockObj.new()
+  d1:set({ position = { x = 50, y = 20 }})
+  d1:setChar("0", True)
+
+  ; DISPLAY 2
+  Local d2 = dw.seg7.blockObj.new()
+  d2:set({ position = { x = 110, y = 20 }})
+  d2:setChar("1", True)
+
+  ; DISPLAY 3
+  Local d3 = dw.seg7.blockObj.new()
+  d3:set({ position = { x = 170, y = 20 },
+           colors = { on = $ffff00, off = $80202000, edge = $444400 }
+           })
+           
+  d3:setChar("2", True)
+
+  ; DISPLAY 4
+  Local d4 = dw.seg7.blockObj.new()
+  d4:set({ position = { x = 230, y = 45 },
+           colors = { on = $00ff00, off = $c0001000, edge = $001000 },
+           scale = 0.7 
+           })
+  d4:setChar("-", True)
+
+  ; Create a Group
+  g1 = dw.seg7.groupObj.new(
+  { value  = "123 HELLO   THIS   IS   A   TEST      7SEG     ",
+    length = 15,
+    distance = 40,
+    position = { x = 20, y = 140 },
+    colors = { on = $dd3300, off = $c0240000, edge = $160000 },
+    edgesize = 1,
+    scale = 0.6
+    }
+  )
+  
+  ; Setup some variable to bring some life into the test program
+  ; d : bitmasked value for the d4 display
+  Local d = 0
+  Local scrLeft = True
+  
+  ; Update values internval
+  SetInterval(1, 
+    Function()
+      ; Display Blocks
+      ; Pick some random value to show in the display blocks
+      Local a, b, c = ToString(Rnd(10)), ToString(Rnd(10)), Rnd(32)+65
+
+      d1:setChar(a, False)       ; Set the character and redraw
+      d2:setChar(b, False)       ; Set the character and redraw
+      d3:setChar(Chr(c), False)  ; Set the character and redraw
+      d4:setSegments(d, False)   ; Sert the mask and redraw
+      d = d + 1                  ; Increase the mask value by 1
+      If d > 128 Then d = 0      ; ...and reset it if > 128
+      
+      ; Scroller
+      If scrLeft
+        If g1:scrollLeft(False)
+          scrLeft = Not(scrLeft)
+        EndIf
+      Else
+        If g1:scrollRight(False)
+          scrLeft = Not(scrLeft)
+        EndIf
+      EndIf
+    
+    EndFunction,
+    150)
+  
+  ; Rendering
+  SetInterval(2,
+    Function()
+      d1:draw()
+      d2:draw()
+      d3:draw()
+      d4:draw()
+      g1:draw()
+      Flip(True)
+    EndFunction,
+    50)
+
+  ; Infinite loop until you hit Escape
+  BeginDoubleBuffer()
+  
+  Repeat
+        
+    CheckEvent()
+    
+  Forever
+  
+EndFunction
+
+dw.dots = 
+  { bufferSize = 
+      { w = 100, h = 13 },
+    bgcolor = $C0161616,
+    multiplier = 4,
+    font = 
+      { name = #SANS, size = 13, style = #NONE, color = $FFFFFF },
+    position = 
+      { x = 10, y = 370 },
+    size = 
+      { w = 0, h = 0 },
+    grid =
+      { color = $000000, thikness = 1, gap = 0 },
+    content = { "--- empty ---", "Hello!" },
+    cindex = 0,
+    
+    scrollVertical = False,
+    scrollOffset = 0,
+    scrollSpeed = 0.15,
+    scrollPause = 100,
+    scrollPauseCnt = 0,
+    
+    changed = True,
+    isPaused = False,
+    
+    onTouch = Nil,
+    onLongTouch = Nil,
+    longPress      = 250,
+    longPressTimer = 0,
+    btnId   = Nil
+    }
+
+Function dw.dots:new(args)
+  Local o = CopyTable(self)
+  
+  If Not(IsNil(args))
+    If TB.Item.Exists(args, "multiplier") Then o.multiplier = args.multiplier
+    If TB.Item.Exists(args, "buffersize") Then o.BufferSize = args.BufferSize
+    If TB.Item.Exists(args, "bgcolor") Then o.bgcolor = args.bgcolor
+    If TB.Item.Exists(args, "font") Then o.font = args.font
+    If TB.Item.Exists(args, "position") Then o.position = args.position
+    If TB.Item.Exists(args, "grid") Then o.grid = args.grid
+    If TB.Item.Exists(args, "content") Then o.content = args.content
+    If TB.Item.Exists(args, "scrollvertical") Then o.scrollvertical = args.scrollvertical
+    If TB.Item.Exists(args, "scrollspeed") Then o.scrollspeed = args.scrollspeed
+    If TB.Item.Exists(args, "scrollpause") Then o.scrollpause = args.scrollpause
+    If TB.Item.Exists(args, "ontouch") Then o.ontouch = args.ontouch
+    If TB.Item.Exists(args, "onlongtouch") Then o.onlongtouch = args.onlongtouch
+  EndIf
+  
+  o.trackLongPress = 
+    Function(msg)
+      Local obj = msg.userdata
+      obj.longPressTimer = StartTimer(Nil)
+    EndFunction
+    
+  o.size.w = o.bufferSize.w*o.multiplier
+  o.size.h = o.bufferSize.h*o.multiplier
+  
+  o.grid.gap = o.multiplier
+  
+  o.fontId = OpenFont(Nil, o.font.name, o.font.size, { Engine = #FONTENGINE_INBUILT } )
+  UseFont(o.fontId)
+  
+  If o.scrollVertical
+    o.scrollOffset = o.bufferSize.h
+  Else
+    o.scrollOffset = o.bufferSize.w
+  EndIf
+  
+  ; Create grid brush
+  o.gridBrush = CreateBrush(Nil, o.size.w, o.size.h, $00FF00, { AlphaChannel = True, Clear = True })
+
+  SelectBrush(o.gridBrush, #SELMODE_COMBO, 2)
+    Local y = 0
+    For Local c = 0 To o.bufferSize.w
+      Line(0, y, o.size.w, y, o.grid.color, { Thickness = o.grid.thikness })
+      y = y + o.grid.gap
+    Next
+    Local x = 0
+    For Local r = 0 To o.bufferSize.w
+      Line(x, 0, x, o.size.h, o.grid.color, { Thickness = o.grid.thikness })
+      x = x + o.grid.gap
+    Next
+    
+  EndSelect
+  
+  o.brush =   CreateBrush(Nil, o.bufferSize.w, o.bufferSize.h, $222222, { AlphaChannel = True, Clear = True })
+
+  ; Touch event
+  Local events = { OnMouseDown = o.trackLongPress }
+  If TB.Item.Exists(o, "ontouch")
+    events["onmouseup"] = 
+      Function(msg)
+        Local obj = msg.userdata
+        Local t = GetTimer(obj.longPressTimer)
+        StopTimer(obj.longPressTimer)
+        If t >= obj.longPress
+          If TB.Item.Exists(obj, "onlongtouch")
+            obj.OnLongTouch(obj)
+            Return()
+          EndIf
+        Else
+          obj.OnTouch(obj)
+        EndIf
+      EndFunction
+  EndIf
+
+  o.BtnId = MakeButton(Nil, #SIMPLEBUTTON, o.position.x, o.position.y, o.size.w, o.size.h, events, o)
+
+  
+  Return(o)
+EndFunction
+
+Function dw.dots:draw(drawText)
+
+  Local b = self.brush
+  Local s = self.content[self.cIndex]
+
+  ; SPECIAL COMMANDS
+  ; Format {:cmd:p1,p2,p3,...}
+  ;   Where cmd is the command (3 characters) and
+  ;   p<n> are the parameters if any.
+  ;
+  ; CHANGE FONT SIZE
+  ; ----------------
+  ; Change the font size relative to the current size
+  ;   Command   FNS
+  ;   Params    size    Can be a positive or negative value
+  ;                     that will be added to the current size
+  
+  If LeftStr(s, 2) = "{:"
+    ; COMMAND DETECTED
+    Local cmd = MidStr(s, 2, 3)
+    Switch cmd
+      Case "FNS"
+        ;-------------------
+        ; --- FONT SIZE ---
+        ;-------------------
+        Local t    = ReplaceStr(s, "{:", "")
+              t    = ReplaceStr(t, "}", "")
+        Local a1   = SplitStr(t, ":")
+        Local size = ToNumber(a1[1])
+          
+        self.font.size = self.font.size + size
+        CloseFont(self.fontId)
+        self.fontId = OpenFont(Nil, self.font.name, self.font.size, { Engine = #FONTENGINE_INBUILT } )
+
+        ; Skip this command line
+        self.cIndex = self.cIndex+1
+        If self.cIndex > ListItems(self.content)-1
+          self.cIndex = 0
+        EndIf
+        s = self.content[self.cIndex]
+              
+      Default
+        ; NOT A COMMAND?
+        
+    EndSwitch
+      
+    
+  EndIf
+  
+  SetFillStyle(#FILLCOLOR)
+  
+  
+  ;SelectBrush(b, #SELMODE_COMBO, 2)
+    ;Box(self.position.x, self.position.y, self.size.w, self.size.h, self.bgColor)
+    ;DisplayBrush(self.bgBrush, self.position.x, self.position.y)
+  ;EndSelect
+  
+  SelectBrush(b, #SELMODE_COMBO, 2)
+    Box(0, 0, self.size.w, self.size.h, self.bgColor)
+  EndSelect
+  SelectBrush(b, #SELMODE_COMBO, 0)
+    If drawText
+      UseFont(self.fontId)
+      SetFontStyle(self.font.style)
+      SetFontColor(self.font.color)
+      
+      If self.scrollVertical
+        Local ww, pc = {}, ""
+        If TextWidth(s) > self.bufferSize.w
+          ww = { wordwrap = self.bufferSize.w }
+        EndIf
+        TextOut(#LEFT, self.scrollOffset, s, ww)
+      Else
+        TextOut(self.scrollOffset, #CENTER, s)
+      EndIf
+    EndIf
+   
+  EndSelect
+
+  Local b2 = CopyBrush(b, Nil)
+  ScaleBrush(b2, self.size.w, self.size.h, False)
+  
+  ; Render to the screen
+  DisplayBrush(b2, self.position.x, self.position.y)
+  DisplayBrush(self.gridBrush, self.position.x, self.position.y)
+  
+  
+  FreeBrush(b2)
+  
+EndFunction
+
+Function dw.dots:nextItem()
+  ; Cambia il testo e mette in pausa
+  self.cIndex = self.cIndex+1
+  If self.cIndex > ListItems(self.content)-1
+    self.cIndex = 0
+  EndIf
+  self.scrollOffset = 0
+  self.scrollPauseCnt = 0
+
+EndFunction
+
+Function dw.dots:scroll(left)
+  UseFont(self.fontId)
+
+  Local s = self.content[self.cIndex]
+  self.isPaused = False
+  
+  If self.scrollVertical
+    ; VERTICAL SCROLL
+    ; ---------------
+    If left
+      ; Move up
+      self.scrollOffset = self.scrollOffset-self.scrollSpeed
+      If self.scrollOffset < 0
+        ; Pause
+        self.scrollPauseCnt = self.scrollPauseCnt + 1
+        self.isPaused = True
+        
+         If self.scrollPauseCnt <= self.scrollPause
+          self.scrollOffset = 0
+          ;self.scrollOffset = self.bufferSize.w
+          Return()
+        Else
+          ; Exit
+          self.isPaused = False
+          If self.scrollOffset < -self.bufferSize.h
+            ; New index
+            self.cIndex = self.cIndex + 1
+            If self.cIndex > ListItems(self.content)-1
+              self.cIndex = 0
+              s = self.content[self.cIndex]
+            EndIf
+            ; Reset
+            self.scrollPauseCnt = 0
+            self.scrollOffset = self.bufferSize.h
+          EndIf
+        EndIf
+      EndIf
+       
+    Else
+    
+      ; Move down
+      self.scrollOffset = self.scrollOffset+self.scrollSpeed
+      If self.scrollOffset > 0
+        ; Pause
+        self.scrollPauseCnt = self.scrollPauseCnt + 1
+        self.isPaused = True
+        
+         If self.scrollPauseCnt <= self.scrollPause
+          self.scrollOffset = 0
+          ;self.scrollOffset = self.bufferSize.w
+          Return()
+        Else
+          ; Exit
+          self.isPaused = False
+          If self.scrollOffset > self.bufferSize.h
+            ; New index
+            self.cIndex = self.cIndex + 1
+            If self.cIndex > ListItems(self.content)-1
+              self.cIndex = 0
+              s = self.content[self.cIndex]
+            EndIf
+            ; Reset
+            self.scrollPauseCnt = 0
+            self.scrollOffset = -self.bufferSize.h
+          EndIf
+        EndIf
+      EndIf
+     
+    EndIf
+    
+  Else
+    ; HORIZONTAL SCROLL
+    ; -----------------
+    
+    If left
+    
+      ; Move to the left
+      self.scrollOffset = self.scrollOffset - self.scrollSpeed
+      If self.scrollOffset <= 0
+        ; Pause
+        self.scrollPauseCnt = self.scrollPauseCnt + 1
+        self.isPaused = True
+
+        If self.scrollPauseCnt <= self.scrollPause
+          self.scrollOffset = 0
+          ;self.scrollOffset = self.bufferSize.w
+          Return()
+        Else
+          ; Exit
+          self.isPaused = False
+          If self.scrollOffset < -TextWidth(s)
+            ; New index
+            self.cIndex = self.cIndex + 1
+            If self.cIndex > ListItems(self.content)-1
+              self.cIndex = 0
+              s = self.content[self.cIndex]
+            EndIf
+            ; Reset
+            self.scrollPauseCnt = 0
+            self.scrollOffset = self.bufferSize.w
+          EndIf
+        EndIf
+      EndIf
+      
+    Else
+      ; Move to the right
+      self.scrollOffset = self.scrollOffset + self.scrollSpeed
+      If self.scrollOffset > 0 ; self.bufferSize.w - TextWidth(s)
+        ; Pause
+        self.scrollPauseCnt = self.scrollPauseCnt + 1
+        self.isPaused = True
+        
+        If self.scrollPauseCnt <= self.scrollPause
+          self.scrollOffset = 0;- TextWidth(s)
+          ;self.scrollOffset = self.bufferSize.w
+          Return()
+        Else
+          ; Exit
+          self.isPaused = False
+          If self.scrollOffset > self.bufferSize.w
+            ; New index
+            self.cIndex = self.cIndex + 1
+            If self.cIndex > ListItems(self.content)-1
+              self.cIndex = 0
+              s = self.content[self.cIndex]
+            EndIf
+            ; Reset
+            self.scrollPauseCnt = 0
+            self.scrollOffset = -TextWidth(s)
+            
+          EndIf
+        EndIf
+      EndIf
+
+    EndIf
+
+  EndIf
+  
+EndFunction
+
+; Creare oggetto per gestire una stringa con i metodi
+; .display
+;   .new()
+;   :setString()
+;   :setSegments()
+;   :set()
+;   :draw()
+;   :scrollLeft(wrap)
+;   :scrollRight(wrap)
+
+; dw.seg7.test()
+
+/*
+o = dw.dots:new()
+Repeat
+StartTimer(1)
+  o:draw(True)
+  o:scroll(True)
+DebugPrint(GetTimer(1))
+  Wait(10, #MILLISECONDS)
+Forever
+*/

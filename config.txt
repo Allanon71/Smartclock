@@ -1,0 +1,300 @@
+// ------------------------
+// SMARTCLOCK CONFIGURATION
+// ------------------------
+// Explanation about strings in square brackets
+// I've developed this configuration system so that variable types can be
+// specified, in this file you will encounter:
+// [SIN] -> Single Integer entry
+// [SBL] -> Single Boolean entry
+// [SFL] -> Single Floating entry
+// [SCL] -> Single Color entry
+// [MST] -> Multiple Strings entries
+// [SST] -> Single String entry
+// [FNN] -> Font Name entry
+// [CNS] -> Constant Name entry
+// Please have a look at the FS.Config.Load() function in the FileSYstem library
+// for more details and more tags.
+// -----------------------------
+
+// Screen & window configuration
+// -----------------------------
+{ screen
+  // Resolution
+  [SIN]xres = 800
+  [SIN]yres = 480
+  
+  // Window's attributes
+  [SBL]borderless = 1
+  [SBL]sizeable = 0
+  [SBL]fixed = 1
+  [SBL]nomodeswitch = 1
+  }
+
+
+
+// Clock
+// -----
+{ clock_elements
+  { hours_digit
+    // Hours digits position and scaling factor
+    [SIN]x = 30
+    [SIN]y = 40
+    [SFL]scale = 2.7
+    }
+  { minutes_digit
+    // Minutes digits position and scaling factor
+    [SIN]x = 350
+    [SIN]y = 40
+    [SFL]scale = 2.7
+    }
+  { seconds_digit
+    // Seconds digits position and scaling factor
+    // put enabled=0 to disable seconds
+    [SIN]x = 640
+    [SIN]y = 140
+    [SFL]scale = 1.5
+    [SBL]enabled = 1
+    }
+  { dots
+    // Flashing dots position, distance and size
+    [SIN]x = 302
+    [SIN]y = 90
+    [SIN]distance = 100
+    [SIN]size = 16
+    }
+  { normal_colors
+    // Clock colors in normal conditions (not dimmed)
+    [SCL]fill_on  = $FFFFFF
+    [SCL]fill_off = $C01F1F1F
+    [SCL]borders  = $000000
+    }
+  { misc 
+    // Misc options
+    //   Size of the segment's borders
+    [SFL]edges_size = 0.2
+
+    //   Duration of the dot's 'on' phase in ms
+    [SIN]dots_on_time = 250
+    }
+  }
+
+  
+  
+// Buttons
+// -------
+{ buttons
+  // Dimmer on/off button
+  { dimmer
+    [SBL]enabled = 1
+    [SBL]pushed = 1
+    [SIN]x = 720
+    [SIN]y = 20
+    [SIN]width = 60
+    [SIN]height = 60
+    }
+
+  // Change clock mode button  
+  { clock_mode
+    [SBL]enabled = 1
+    [SIN]x = 630
+    [SIN]y = 20
+    [SIN]width = 60
+    [SIN]height = 60
+    }
+  }
+
+  
+  
+// Auto-Dimmer
+// -----------
+// Used to switch to an alternative color set when
+// the current time is inside the dim time frame.
+{ auto_dimmer
+  [SBL]enabled = 1
+  [SIN]on_hour = 19
+  [SIN]off_hour = 8
+
+  // Segments alternative color set
+  { colors
+    [SCL]fill_on  = $AA8844
+    [SCL]fill_off = $E00C0C00
+    [SCL]borders  = $101000
+    }
+  }
+
+
+// Strings
+// -------
+{ strings
+  //   Put here the weekdays in your native language
+  [MST]local_weekdays = lunedì,martedì,mercoledì,giovedì,venerdì,sabato,domenica
+  
+  //   Put here the weekdays shortcuts in your native language
+  [MST]local_wdshort  = LUN,MAR,MER,GIO,VEN,SAB,DOM
+  
+  //   Error string
+  [SST]fetcherror = Errore
+
+  { weather
+    // Translate into your native language these strings
+    [SST]meteo = METEO
+    [SST]wind = Vento
+    [SST]speed = Km/h
+    [SST]sunrise = Alba
+    [SST]sunset = Tramonto
+    [SST]temperature = Temp.
+    [SST]humidity = Umidità
+    [SST]pressure = Pressione
+    [SST]rain = Pioggia
+    [SST]clouds = Nubi
+    [SST]forecast = PREVISIONE
+    [SST]today = Oggi
+    [SST]tomorrow = Domani
+    [SST]ttomorrow = D.Domani
+    [MST]directions = N,NNE,NE,ENE,E,ESE,SE,SSE,S,SSO,SO,OSO,O,ONO,NO,NNO,N
+    }
+  { months
+    // Translate into your native language these strings
+    [SST]JAN = Gennaio
+    [SST]FEB = Febbraio
+    [SST]MAR = Marzo
+    [SST]APR = Aprile
+    [SST]MAY = Maggio
+    [SST]JUN = Giugno
+    [SST]JUL = Luglio
+    [SST]AUG = Agosto
+    [SST]SEP = Settembre
+    [SST]OCT = Ottobre
+    [SST]NOV = Novembre
+    [SST]DEC = Dicembre
+    }
+  }
+  
+// Weather (Open Weather)
+// ----------------------
+{ weather
+  // This program uses OpenWeather, please obtain your own
+  // API key on OpenWeather website, it's free and put it here.
+  // Adjust the preferences to your needs.
+  // NOTE: At this time only http:// addresses can be accessed, no https:// yet
+  [SST]url = http://api.openweathermap.org/data/2.5/onecall?
+
+  // === IMPORTANT ===
+  // Replace this key with your key, it's free, and you can obtain it in 
+  // few minutes!
+  [SST]apikey = d6d1b58b7bfb61eac9bb32f326f1ceaa
+  [SST]language = it
+  [SST]units = metric
+  [SFL]latitude = 42.24
+  [SFL]longitude = 11.22
+  [SIN]forecast_days = 5
+  [SST]exclude = minutely{COMMA}hourly
+  [SST]city = Capalbio Scalo
+  }
+  
+// News
+// ----
+{ news
+  // Put here an url feed, actually https is not yet supported.
+  [SST]feed_url = http://rss.adnkronos.com/RSS_PrimaPagina.xml
+  }
+
+// Updaters
+// --------
+{ updaters
+  // Refresh rate of the screen
+  [SIN]screen_refresh_ms = 20
+
+  // Weather gathering interval
+  [SIN]weather_refresh_ms = 3600000
+
+  // Redraws at any gfx change. Needed for the blur fx
+  [SIN]min_redraws = 25
+
+  // Wait for vertical blank?
+  [SBL]wait_vbl = 0
+  }
+  
+// Resources
+// ---------
+{ resources
+  // Buttons icons
+  [SST]dimmer_on_icon = data/dim-light-on.png
+  [SST]dimmer_off_icon = data/dim-light-off.png
+  [SST]clock_mode_icon = data/clock-mode.png
+  }
+
+// Screensaver
+// -----------
+{ screensaver
+  // Screensaver timeout, depends on the screen_refresh_ms frequency
+  [SIN]delay_frames = 22500
+  // Duration of the screensaver animation
+  [SIN]anim_duration_frames = 200
+  // Animation speed (lower = faster)
+  [SIN]anim_frame_duration = 4
+  }
+  
+// News Dot Matrix
+// ---------------
+// New display is defined here
+{ news_display
+  [SIN]pixel_multiplier = 3
+  [SIN]buffer_width = 260
+  [SIN]buffer_height = 30
+  [SIN]x = 10
+  [SIN]y = 276
+  [SFL]scroll_speed = 1
+  [SIN]scroll_pause = 500
+  [SBL]scroll_vertical = 1
+  [SIN]grid_thikness = 1
+  { font
+    [FNN]name = data/droid.ttf
+    [SIN]size = 15
+    [CNS]style = #NONE
+    }
+  { colors
+    { normal
+      [SCL]background = $D0151515
+      [SCL]font = $FFFFFF
+      [SCL]grid = $000000
+      }
+    { dimmed
+      [SCL]background = $E00c0c00
+      [SCL]font = $AA8844
+      [SCL]grid = $000000
+      }
+    }
+  }
+
+// Forecast Dot Matrix
+// -------------------
+// Forecast display is defined here
+{ forecast_display
+  [SIN]pixel_multiplier = 6
+  [SIN]buffer_width = 130
+  [SIN]buffer_height = 17
+  [SIN]x = 10
+  [SIN]y = 370
+  [SFL]scroll_speed = 0.5
+  [SIN]scroll_pause = 250
+  [SBL]scroll_vertical = 0
+  [SIN]grid_thikness = 1
+  { font
+    [FNN]name = data/droid.ttf
+    [SIN]size = 16
+    [CNS]style = #NONE
+    }
+  { colors
+    { normal
+      [SCL]background = $D0151515
+      [SCL]font = $FFFFFF
+      [SCL]grid = $000000
+      }
+    { dimmed
+      [SCL]background = $E00c0c00
+      [SCL]font = $AA8844
+      [SCL]grid = $000000
+      }
+    }
+  }

@@ -1,0 +1,1241 @@
+
+@INCLUDE "includes.hws"
+
+; TO IMPLEMENT
+; - Meteo Hazard
+; - Music Player
+; - Clock Mode 2
+
+; Global app storage
+Global app     = {}
+
+app.mode        = 1          ; 1 = CLOCK MODE
+app.clock_mode  = 1          ;   1 = DIGITAL CLOCK
+                             ;   2 = DOT MATRIX
+
+app.prefs =
+  ; RENDERING PREFS
+  { refresh        = 20,               ; Frequency in ms
+    weatherRefresh = 60*1000*15,       ; Every 15 minutes
+    tempInfoTime   = 2000,             ; Temporary message duration
+    minRedraws     = 20,               ; Redraws needed to allow fade fx        
+    vwait          = False,            ; Wait for vertical blank
+    
+  ; WEATHER PREFS (picked from the config file)
+    weather = { },
+    
+  ; SCREENSAVER (durations depends on the refresh time, values are expressed in frames)
+    screenSaver =
+    { Frames    = 22500,
+      Duration  = 200,       
+      FrameTime = 3,
+      Anim = { 197, 198, 199, 200, 201, 202 },
+      Anims =
+        { h1 = { 197, 198, 199,  32,  32,  32,  32,  32,  32,  32,  32, 202 },
+          h2 = {  32,  32,  32, 199,  32,  32,  32,  32,  32,  32, 202,  32 },
+          m1 = {  32,  32,  32,  32, 199,  32,  32,  32,  32, 202,  32,  32 },
+          m2 = {  32,  32,  32,  32,  32, 199, 200, 201, 202,  32,  32,  32 },
+          s1 = { 200, 201, 202, 197, 198, 199,  32,  32,  32,  32,  32,  32 },
+          s2 = { 198, 197, 202, 201, 200, 199,  32,  32,  32,  32,  32,  32 }
+          },
+      },
+      
+  ; BUTTONS
+    buttons =                                 ; BUTTON RESOURCES
+    { dimmer =                                ;   DIMMER icons
+      { On  = "data/dim-light-on.png",        ;     ON
+        Off = "data/dim-light-off.png"        ;     OFF
+        },    
+      clock_mode = "data/clock-mode.png"      ; CLOCK MODE icon
+      },
+      
+    ;-----------------------------------------------------------------------
+    clock =                             ; CLOCK VARIATIONS
+    ;-----------------------------------------------------------------------
+    { dotMatrix =
+      { buffer = { 160, 96 },          ; Real buffer width & height
+        clearColor = $E0202034,        ; Background color
+        gridColor = $00000000,         ; Simulated grid color
+        gridSize = 1,                  ; Simulated grid size
+        font = 
+          { name = "data/droid.ttf",
+            style = #BOLD+#ANTIALIAS,
+            color = $FFFFFF
+            },
+        positions =
+          { time = { #CENTER, -2, 42 },      ; x, y, font size
+            date = { #CENTER, 32, 14 },      ; x, y, font size
+            },
+        dotsOnTime = 150,
+        anims =
+          { { id     = -1,
+              frame  = -1,
+              frames = -1,
+              frameTime = -1,
+              position = 
+                { start = { -1, -1 },
+                  stop  = { -1, -1 }
+                  },
+              size = { -1, -1 },
+              }
+            }
+        },
+
+      ;------------------------------------------------------------
+      digital7 =                            ; SEVEN SEGMENTS DIGITAL CLOCK
+      ;------------------------------------------------------------
+      { positions =                         ; ---- ITEM GEOMETRIES ----
+        { hh = { 30, 40, 2.7 },             ; HOUR         x, y, scale
+          mm = { 350, 40, 2.7 },            ; MINUTES      x, y, scale
+          ss = { 640, 140, 1.5 },           ; SECONDS      x, y, scale
+          week = { 40, 290, 0.5 },          ; WEEKDAY      x, y, scale
+          day = { 300, 290, 0.5 },          ; DAY          x, y, scale
+          month = { 380, 290, 0.5 },        ; MONTH        x, y, scale
+          year = { 480, 290, 0.5 },         ; YEAR         x, y, scale
+          info = { 40, 360, 0.65 },         ; INFORMATIONS x, y, scale
+          dots = { 302, 90, 100, 16 }       ; TIME DOTS    x, y, distance, size
+          },
+        buttons =                           ;--------- BUTTONS --------
+        { dimmer =                          ; AUTO DIMMER SWITCH
+          { enabled  = True,                ;   Enabled flag
+            position = { 720, 20, 60, 60 }, ;   x, y, width, height
+            pushed   = True                 ;   Pushed frame?
+            },
+          clock_mode =                      ; CLOCK SWITCHER
+          { enabled  = True,                ;   Enabled flag
+            position = { 630, 20, 60, 60 }  ;   x, y, width, height
+            }
+          },
+                                            ;------- COLORS -----------
+        colors = { $FFFFFF,                 ; Fill Color On
+                   $C01f1f1f,               ; Fill Color Off
+                   $000000 },               ; Border Color
+        
+        autoDimmer =                        ;-- AUTO DIMMER PARAMS ----
+          { enabled = True,                 ; Enabled?
+            colors =                        ; Colors when dimmer is On
+            { $AA8844,                      ; Fill Color On
+              $E00c0c00,                    ; Fill Color Off
+              $101000                       ; Border Color
+              },
+            onHour = 19,                    ; Start dimmer hour
+            offHour = 8                     ; End dimmer Hour
+            },
+
+        edge        = 0.2,                  ; Edges size
+        infoLen     = 20,                   ; How many characters are in the info line
+        distance    = 1.5,                  ; Distance between characters
+        showSeconds = True,                 ; Show seconds?
+        dotsOnTime  = 250,                  ; Dots On time
+        scrollDelay = 10,                   ; Info scroll delay
+        scrollPause = 180,                  ; Info pause duration
+        
+        newsDotMatrix = {                   ; NEWS DotMatrix scroller
+          pixel_multiplier = 3,             ; Size of each dot
+          buffer_width = 260,               ; Real area width in pixels
+          buffer_height = 30,               ; Real area height in pixels
+          x = 10,                           ; Horizontal position
+          y = 276,                          ; Vertical position
+          scroll_pause = 500,               ; Scroll pause length
+          scroll_vertical = True,           ; Vertical scroller?
+          font = {                          ; Font definition
+            name = "data/droid.ttf",        ;   Font name
+            size = 15,                      ;   Font size
+            style = #NONE },                ;   Font style
+          colors = {                        ; Colors
+            normal = {                      ;   Colors for the normal state
+              background = $D0151515,       ;     Background color
+              font = $FFFFFF,               ;     Font color
+              grid = $000000 },             ;     Grid color
+            dimmed = {                      ;   Colors for the dimmed state
+              background = $D0151515,       ;     Background color
+              font = $303030,               ;     Font color
+              grid = $000000 }              ;     Grid color
+              }
+            }
+        }
+      }
+    }
+
+; Temporary storage
+; -----------------
+app.temp =
+  { old_sec         = "",
+    delayCnt        = 0,
+    ; * = pause
+    info            = "",
+    tempInfo        = "",
+    tempInfoEnabled = False,
+    tempInfoID      = -1,
+    loadedGfx       = {},
+    
+    news = {},
+    
+    btnDimmerID     = { Changed = True, On = -1, Off = -1, btn = -1 },
+    btnClockModeID  = { Changed = True, On = -1, btn = -1 },
+    isDimmed        = False,
+    
+    ; Needed to reduce the continuos redrawing of still objects. 
+    ; The redraw will be executed only for a fixed amount of times
+    ; to allow smooth fade effects and to consume lower cpu cycles.
+    ; Each record has the following structure:
+    ;   .cnt      How many times has beed rendered since last change
+    ;   .curr     Current value, to compare with new values
+    updateTracker    = {},
+    
+    screenSaverCnt   = app.prefs.screenSaver.Frames,
+    screenSaverCnt2  = 0,
+    screenSaverIndex = 0,
+    screenSaverTime  = 0,
+    screenSaver =
+    { Index = 
+      { h1 = 0, h2 = 0,
+        m1 = 0, m2 = 0,
+        s1 = 0, s2 = 0 }
+      }
+    }
+
+Function app.getWeather()
+  ; This func retrives the weather and forecasts
+  ; --------------------------------------------
+  Local tt = app.getDate()
+  Local st = app.prefs.weather.strings
+  
+  Local windToDir = Function(d)
+                      ; Convert wind direction
+                      If ToString(d) = "?"
+                        Return("?")
+                      EndIf
+                      Local idx = Mod(d, 360)
+                      idx = Round(Idx/22.5)
+                      Return(st.directions[idx])
+                    EndFunction
+  
+  ; RETRIEVE CURRENT WEATHER
+  Local d = app.prefs.weather
+  Local u = d.onecall .. "appid="   .. d.apikey ..
+                         "&lat="    .. d.latitude ..
+                         "&lon="    .. d.longitude ..
+                         "&cnt="    .. d.forecastDays ..
+                         "&exclude=" .. d.exclude ..
+                         "&lang="   .. d.language ..
+                         "&units="  .. d.units
+  
+  ; If there are some errors avoids crashes and report the error
+  ; instead of the weather conditions
+  ExitOnError(False)
+  Local data = DownloadFile(u)
+  Local e = GetLastError()
+  ExitOnError(True)
+
+  If e <> 0
+    ; If there is an error it will be displayed
+    app.temp.info =
+      { st.meteo,
+        "{:FNS:-4}",
+        st.fetchError .. ":" .. e,
+        GetErrorName(e),
+        "{:FNS:+4}"
+        }
+
+    Return()
+
+  EndIf
+  
+  ; Decode weather data
+  Local t = JSON.Decode(data) 
+  d.fetched = t
+  
+  ; Build info table
+  ; ----------------
+  If TB.Item.IsNil(t.current, "wind_deg") Then t.current.wind_deg = "?"
+  
+  Local sp = ""
+  Local windDir = WindToDir(t.current.wind_deg)
+
+  ; Build the weather table
+  Local info = { st.meteo ..       " " .. app.config.weather.city,
+                 st.wind ..        " " .. t.current.wind_speed .. " " .. st.speed .. " " .. windDir .. sp,
+                 st.sunrise ..     " " .. RightStr(TimestampToDate(t.current.sunrise + t.timezone_offset, True), 8) .. sp,
+                 st.sunset ..      " " .. RightStr(TimestampToDate(t.current.sunset + t.timezone_offset, True), 8) .. sp,
+                 st.temperature .. " " .. Int(t.current.temp) .. "°" .. sp,
+                 st.humidity ..    " " .. t.current.humidity .. "%" .. sp,
+                 st.pressure ..    " " .. t.current.pressure .. sp,
+                 UpperStr(t.current.weather[0].description) }
+  
+  ; FORECAST
+  InsertItem(info, st.forecast)
+  InsertItem(info, "{:FNS:-3}")
+  
+  ; Loop
+  For Local i = 0 To app.prefs.weather.forecastdays
+    ; Every field is verified because sometimes the API does not return all
+    ; the fileds but only those are available at that time.
+    If TB.Item.Exists(t.daily, i)
+      Local wspd = "---"
+      If TB.Item.Exists(t.daily[i], "wind_speed") Then wspd = FormatStr("%i", t.daily[i].wind_speed)
+      Local tmin = "---"
+      Local tmax = "---"
+      If TB.Item.Exists(t.daily[i], "temp")
+        If TB.Item.Exists(t.daily[i].temp, "min") Then tmin = FormatStr("%i", t.daily[i].temp.min)
+        If TB.Item.Exists(t.daily[i].temp, "max") Then tmax = FormatStr("%i", t.daily[i].temp.max)
+      EndIf
+      Local rain = "---"
+      If TB.Item.Exists(t.daily[i], "rain") Then rain = FormatStr("%.1f", t.daily[i].rain)
+      Local cloud = "---"
+      If TB.Item.Exists(t.daily[i], "cloud") Then cloud = FormatStr("%i", t.daily[i].clouds)
+      
+      Local today = app.GetWeekday(tt.wd, i) .. ": "
+      InsertItem(info, today .. t.daily[i].weather[0].description)  
+      Local windDir = WindToDir(t.daily[i].wind_deg)  
+      InsertItem(info, today .. st.wind ..        " " .. wspd .. " " .. st.speed .. " " .. windDir)
+      InsertItem(info, today .. st.temperature .. " Min " .. tmin .. "°, Max " ..  tmax .. "°")
+      InsertItem(info, today .. st.rain .. " " .. rain .. "mm, " .. st.clouds .. " " ..  cloud .. "%")
+
+    EndIf
+      
+  Next
+  
+  InsertItem(info, "{:FNS:+3}")
+
+  ; Save the weather data to be displayed
+  app.temp.info = info
+  
+EndFunction
+
+Function app.resetGfxTracker()
+  ; Reset the GfxTracker, needed to update and refresh all the screen items
+  ; -----------------------------------------------------------------------
+  For i, v In Pairs(app.temp.updateTracker)
+    v.cnt = 0
+    v.curr = ""
+  Next
+  
+EndFunction
+
+Function app.newGfxTracker(name, value)
+  ; Install a new gfxTracker
+  ; ---------------------------
+  app.temp.updateTracker[name] = { cnt  = app.prefs.minRedraws,
+                                   curr = value }
+EndFunction
+
+Function app.checkGfxTracker(name, value)
+  ; Returns True if the item must be rendered
+  ; -----------------------------------------
+  Local item = app.temp.updateTracker[name]
+  If value <> item.curr
+    ; Value changed, restart counters
+    item.cnt  = app.prefs.minRedraws
+    item.curr = value
+    Return(True)
+    
+  Else
+    ; Same item
+    If item.cnt <= 0
+      ; All needed redraws completed
+      Return(False)
+      
+    Else
+      ; More redraws needed
+      item.cnt = item.cnt - 1
+      Return(True)
+      
+    EndIf
+    
+  EndIf
+EndFunction
+    
+    
+; Load the configuration file
+; ---------------------------
+app.config = FS.Config.Load("config.txt")
+
+; Setup the display
+; -----------------
+SetDisplayAttributes(
+  { width        = app.config.screen.xres,
+    height       = app.config.screen.yres,
+    borderless   = app.config.screen.borderless,
+    Sizeable     = app.config.screen.sizeable,
+    Fixed        = app.config.screen.fixed,
+    NoModeSwitch = app.config.screen.nomodeswitch
+    })
+    
+; Load the configuration file again to handle relative values (if any)
+app.config = FS.Config.Load("config.txt")
+
+; PARSE & STORE CONFIGURATION VALUES
+; ----------------------------------
+; Setup Digital Clock configuration
+Local d7 = app.prefs.clock.digital7
+Local clockEl = app.config.clock_elements
+d7.positions.hh[0] = clockEl.hours_digit.x
+d7.positions.hh[1] = clockEl.hours_digit.y
+d7.positions.hh[2] = clockEl.hours_digit.scale
+d7.positions.mm[0] = clockEl.minutes_digit.x
+d7.positions.mm[1] = clockEl.minutes_digit.y
+d7.positions.mm[2] = clockEl.minutes_digit.scale
+d7.positions.ss[0] = clockEl.seconds_digit.x
+d7.positions.ss[1] = clockEl.seconds_digit.y
+d7.positions.ss[2] = clockEl.seconds_digit.scale
+d7.positions.dots[0] = clockEl.dots.x
+d7.positions.dots[1] = clockEl.dots.y
+d7.positions.dots[2] = clockEl.dots.distance
+d7.positions.dots[3] = clockEl.dots.size
+d7.showSeconds = clockEl.seconds_digit.enabled
+d7.colors[0] = clockEl.normal_colors.fill_on
+d7.colors[1] = clockEl.normal_colors.fill_off
+d7.colors[2] = clockEl.normal_colors.borders
+Local dimmer = app.config.buttons.dimmer
+d7.buttons.dimmer.enabled = dimmer.enabled
+d7.buttons.dimmer.pushed = dimmer.pushed
+d7.buttons.dimmer.position[0] = dimmer.x
+d7.buttons.dimmer.position[1] = dimmer.y
+d7.buttons.dimmer.position[2] = dimmer.width
+d7.buttons.dimmer.position[3] = dimmer.height
+Local clMode = app.config.buttons.clock_mode
+d7.buttons.clock_mode.enabled = clMode.enabled
+d7.buttons.clock_mode.position[0] = clMode.x
+d7.buttons.clock_mode.position[1] = clMode.y
+d7.buttons.clock_mode.position[2] = clMode.width
+d7.buttons.clock_mode.position[3] = clMode.height
+Local autoDim = app.config.auto_dimmer
+d7.autoDimmer.enabled = autoDim.enabled
+d7.autoDimmer.onHours = autoDim.on_hour
+d7.autoDimmer.offHour = autoDim.off_hour
+d7.autoDimmer.colors[0] = autoDim.colors.fill_on
+d7.autoDimmer.colors[1] = autoDim.colors.fill_off
+d7.autoDimmer.colors[2] = autoDim.colors.borders
+; Misc
+Local misc = app.config.clock_elements.misc
+d7.edge       = misc.edges_size
+d7.dotsOnTime = misc.dots_on_time
+; Strings
+app.wdays = app.config.strings.local_weekdays ;{ "lunedì", "martedì", "mercoledì", "giovedì", "venerdì", "sabato", "domenica" }
+app.wdaya = app.config.strings.local_wdshort  ;{ "LUN", "MAR", "MER", "GIO", "VEN", "SAB", "DOM" }
+app.months = app.config.strings.months
+app.prefs.weather.strings = app.config.strings.weather
+; Weather
+Local wea = app.prefs.weather
+wea.onecall = app.config.weather.url
+wea.apikey = app.config.weather.apikey
+wea.language = app.config.weather.language
+wea.units = app.config.weather.units
+wea.latitude = app.config.weather.latitude
+wea.longitude = app.config.weather.longitude
+wea.forecastDays = app.config.weather.forecast_days
+wea.exclude = app.config.weather.exclude
+; Updaters
+app.prefs.refresh = app.config.updaters.screen_refresh_ms
+app.prefs.weatherRefresh = app.config.updaters.weather_refresh_ms
+app.prefs.minRedraws = app.config.updaters.min_redraws
+; Resources
+app.prefs.buttons.dimmer.on = app.config.resources.dimmer_on_icon
+app.prefs.buttons.dimmer.off = app.config.resources.dimmer_off_icon
+app.prefs.buttons.clock_mode = app.config.resources.clock_mode_icon
+; Screensaver
+app.prefs.screensaver.frames = app.config.screensaver.delay_frames
+app.prefs.screensaver.duration = app.config.screensaver.anim_duration_frames
+app.prefs.screensaver.frameTime = app.config.screensaver.anim_frame_duration
+app.temp.screenSaverCnt = app.prefs.screenSaver.Frames
+; Dot Matrix 1
+app.prefs.newsDotMatrix = app.config.news_display
+; Dot Matrix 2
+app.prefs.forecastDotMatrix = app.config.forecast_display
+
+Global xres, yres = app.config.screen.xres, app.config.screen.yres
+
+app.screen = {}
+Function app.screen.Clear()
+  ; Clear the entire display
+  ; ------------------------
+  SetFillStyle(#FILLCOLOR)
+  Box(0, 0, xres, yres, $000000)
+  
+EndFunction
+
+Function app.screen.draw()
+  ; Draw the screen depending on the app.mode
+  ; -----------------------------------------
+  Switch app.mode
+    Case 1
+      ; CLOCK MODE
+      ;StartTimer(2)
+      app.clock.draw()
+      ;DebugPrint(GetTimer(2))
+      
+  EndSwitch
+  
+  If app.prefs.vwait Then VWait()
+  Flip(True)
+
+EndFunction
+
+app.clock = {}
+
+Function app.clock.draw_dotMatrix()
+  ; Clock mode 2
+  ; ------------
+  ; Parse Current Time
+  Local t  = GetTime(True)
+  Local hh = LeftStr(t, 2)
+  Local mm = MidStr(t, 3, 2)
+  Local ss = RightStr(t, 2)
+  Local d  = GetDate(True)
+  Local dd = LeftStr(d, 2)
+  Local mo = UpperStr(MidStr(d, 3, 3))
+  Local yy = MidStr(d, 7, 4)
+  Local wd = GetWeekday()
+  
+  If app.temp.old_sec <> ss
+    app.temp.old_sec = ss
+    ResetTimer(1)
+    
+  EndIf
+  
+  ; Shortcut to the preferences
+  Local prefs = app.prefs.clock.dotMatrix
+
+  Local gt = GetTimer(1)
+  If gt >= prefs.dotsOnTime
+    t = ReplaceStr(t, ":", " ")   
+  EndIf
+  
+  ; Create a buffer brush
+  Local bid = CreateBrush(Nil, prefs.buffer[0], prefs.buffer[1], #BLACK, { AlphaChannel = True, Clear = True })
+  
+  ; Prepare to draw stuff
+  SelectBrush(bid, #SELMODE_COMBO, 2)
+    SetFillStyle(#FILLCOLOR)
+    Box(0, 0, prefs.buffer[0], prefs.buffer[1], prefs.clearColor)
+    OpenFont(1, prefs.font.name, prefs.positions.time[2], { Engine = #FONTENGINE_INBUILT } )
+    UseFont(1)
+    SetFontStyle(prefs.font.style)
+    SetFontColor(prefs.font.color)
+    TextOut(prefs.positions.time[0], prefs.positions.time[1], t)
+    
+    OpenFont(1, prefs.font.name, prefs.positions.date[2], { Engine = #FONTENGINE_INBUILT } )
+    UseFont(1)
+    TextOut(prefs.positions.date[0], prefs.positions.date[1], wd .. ", " .. dd .. " " .. mo .. " " .. yy)
+    
+  EndSelect
+  
+  ; Scale to the screen size
+  ScaleBrush(bid, xres, yres, False)
+  
+  ; Draw the grid
+  If prefs.gridSize > 0
+    SelectBrush(bid, #SELMODE_COMBO, 2)
+      Local sizew, sizeh = xres/prefs.buffer[0], yres/prefs.buffer[1]
+      Local y = 0
+      For Local c = 0 To prefs.buffer[1]
+        Line(0, y, xres, y, prefs.gridColor, { Thickness = prefs.gridSize })
+        y = y + sizeh
+        
+      Next
+      
+      Local x = 0
+      For Local r = 0 To prefs.buffer[0]
+        Line(x, 0, x, yres, prefs.gridColor, { Thickness = prefs.gridSize })
+        x = x + sizew
+        
+      Next
+      
+    EndSelect  
+  EndIf
+  
+  ; Render to the screen
+  DisplayBrush(bid, 0, 0)
+
+  FreeBrush(bid)
+EndFunction
+
+Function app.setTempInfo(info)
+
+  If app.temp.tempInfoEnabled
+    ; already in use, remove old interval
+    ClearTimeout(app.temp.tempInfoID)
+  EndIf
+
+  app.temp.tempInfo = info
+  app.temp.tempInfoEnabled = True
+  app.temp.tempInfoID = SetTimeout(Nil, 
+    Function()
+      app.temp.tempInfoEnabled = False
+    EndFunction,
+    app.prefs.tempInfoTime
+    )
+  
+EndFunction
+
+Function app.cbDimmer()
+  ; Called when the display must be dimmed
+  ; --------------------------------------
+  Switch app.clock_mode
+    Case 1 ; DIGITAL CLOCK
+      Local prefs = app.prefs.clock.digital7
+      Local msg = ""
+      If prefs.autoDimmer.enabled
+        prefs.autoDimmer.enabled = False
+        prefs.buttons.dimmer.pushed = False
+        msg = "AUTO DIMMER OFF"
+      Else
+        prefs.autoDimmer.enabled = True
+        prefs.buttons.dimmer.pushed = True
+        msg = "AUTO DIMMER ON"
+      EndIf
+      
+      app.setTempInfo(msg)
+      app.temp.btnDimmerID.Changed = True
+      app.temp.btnClockModeID.Changed = True
+      app.screen.Clear()
+
+    Case 2 ; DOT MATRIX
+    
+    
+    
+  EndSwitch
+  
+  app.resetGfxTracker()
+  
+EndFunction
+
+Function app.cbClockMode()
+  ; Called when the clock mode must be switched
+  ; -------------------------------------------
+  Switch app.clock_mode
+    Case 1
+      ; Free DIMMER resource
+      If GetType(app.temp.btnDimmerID.On) <> #NUMBER
+        FreeBrush(app.temp.btnDimmerID.On)
+        FreeBrush(app.temp.btnDimmerID.Off)
+        app.temp.btnDimmerID.On = -1
+        app.temp.btnDimmerID.Off = -1
+        EndDoubleBuffer()
+        DeleteButton(app.temp.btnDimmerID.btn)
+        BeginDoubleBuffer()
+      EndIf
+      
+      ; Free CLOCK MODE resource
+      If GetType(app.temp.btnClockModeID.On) <> #NUMBER
+        FreeBrush(app.temp.btnClockModeID.On)
+        app.temp.btnClockModeID.On = -1
+        EndDoubleBuffer()
+        DeleteButton(app.temp.btnClockModeID.btn)
+        BeginDoubleBuffer()
+      EndIf
+      
+      app.clock_mode = 2
+      app.clock.init()
+  
+    Case 2
+      app.clock_mode = 1
+      app.clock.init()
+
+  EndSwitch
+  
+  app.resetGfxTracker()
+  app.screen.Clear()
+    
+  
+EndFunction
+
+
+Function app.getWeekday(wday, offset)
+  ; Translate the weekday
+  ; ---------------------
+  Local idx = 0
+  For Local i = 0 To 6
+    If app.wdays[i] = wday
+      idx = i
+      Break()
+    EndIf
+  Next
+
+  Return(app.wdaya[Wrap(idx+offset, 0, 7)])
+  
+EndFunction
+
+Function app.getDate()
+  ; Parse Current Time
+  Local t  = GetTime(True)
+  Local hh = LeftStr(t, 2)
+  Local mm = MidStr(t, 3, 2)
+  Local ss = RightStr(t, 2)
+  Local d  = GetDate(#DATELOCAL)
+  Local dd = LeftStr(d, 2)
+  Local mo = app.months[UpperStr(MidStr(d, 3, 3))]
+  Local yy = MidStr(d, 7, 4)
+  Local wd = GetWeekday()
+  
+  Return(
+    { time = t,
+      hh   = hh,
+      mm   = mm,
+      ss   = ss,
+      date = d,
+      dd   = dd,
+      mo   = mo,
+      yy   = yy,
+      wd   = wd
+      })
+EndFunction
+
+Function app.clock.init()
+  ; Initialize clock mode
+  ; ---------------------
+  Switch app.clock_mode
+    Case 1 ; DIGITAL CLOCK
+      Local prefs = app.prefs.clock.digital7
+      ; Dimmer button
+      If prefs.buttons.dimmer.enabled
+        ; Load & Scale button
+        app.temp.btnDimmerID.On  = LoadBrush(Nil, app.prefs.buttons.dimmer.On, { LoadAlpha = True, SmoothScale = True, ScaleWidth = prefs.buttons.dimmer.position[2], ScaleHeight = prefs.buttons.dimmer.position[3] })
+        app.temp.btnDimmerID.Off = LoadBrush(Nil, app.prefs.buttons.dimmer.Off, { LoadAlpha = True, SmoothScale = True, ScaleWidth = prefs.buttons.dimmer.position[2], ScaleHeight = prefs.buttons.dimmer.position[3] })
+        app.temp.btnDimmerID.btn = 
+          MakeButton(Nil, #SIMPLEBUTTON, 
+                     prefs.buttons.dimmer.position[0], prefs.buttons.dimmer.position[1],
+                     prefs.buttons.dimmer.position[2], prefs.buttons.dimmer.position[3],
+                     { OnMouseUp = app.cbDimmer })
+      EndIf
+
+      If prefs.buttons.clock_mode.enabled
+        ; Load & Scale button
+        app.temp.btnClockModeID.On  = LoadBrush(Nil, app.prefs.buttons.clock_mode, { LoadAlpha = True, SmoothScale = True, ScaleWidth = prefs.buttons.clock_mode.position[2], ScaleHeight = prefs.buttons.clock_mode.position[3] })
+        app.temp.btnClockModeID.btn = 
+          MakeButton(Nil, #SIMPLEBUTTON, 
+                     prefs.buttons.clock_mode.position[0], prefs.buttons.clock_mode.position[1],
+                     prefs.buttons.clock_mode.position[2], prefs.buttons.clock_mode.position[3],
+                     { OnMouseUp = app.cbClockMode })
+      EndIf
+    
+      ; Setup the dot matrix display to use for the weather forecast
+      Local dm2 = app.prefs.forecastDotMatrix
+      app.temp.dots = {}
+      app.temp.dots = dw.dots:new(
+      { multiplier = dm2.pixel_multiplier,
+        bufferSize = { w = dm2.buffer_width, h = dm2.buffer_height },
+        bgColor    = dm2.colors.normal.background,;$D0151515,
+        font       = { 
+          name  = dm2.font.name, 
+          size  = dm2.font.size, 
+          style = dm2.font.style, 
+          color = dm2.colors.normal.font },
+        position = { 
+          x = dm2.x, 
+          y = dm2.y },
+        grid = { 
+          color    = dm2.colors.normal.grid, 
+          thikness = dm2.grid_thikness },
+        content = { "---" },
+        scrollSpeed = dm2.scroll_speed,
+        scrollPause = dm2.scroll_pause,
+        scrollVertical = dm2.scroll_vertical,
+        onTouch =
+          ; Change line on touch
+          Function(msg)
+            app.temp.dots:nextItem()
+            app.resetGfxTracker()
+          EndFunction,
+          
+        onLongTouch = 
+          ; ADDITIONAL FUNCTION
+          Function(msg)
+            ; Do nothing for now
+          EndFunction
+        
+        })
+      
+      ; Setup the dot matrix display to use for the news
+      Local dm1 = app.prefs.newsDotMatrix
+      app.temp.dots2 = {}
+      app.temp.dots2 = dw.dots:new(
+      { multiplier = dm1.pixel_multiplier,
+        bufferSize = { 
+          w = dm1.buffer_width, 
+          h = dm1.buffer_height },
+        bgColor    = dm1.colors.normal.background,
+        font       = { 
+          name  = dm1.font.name, 
+          size  = dm1.font.size, 
+          style = dm1.font.style, 
+          color = dm1.colors.normal.font },
+        position = { 
+          x = dm1.x, 
+          y = dm1.y },
+        grid = { 
+          color    = dm1.colors.normal.grid, 
+          thikness = dm1.grid_thikness },
+        content = { "---" },
+        scrollSpeed = dm1.scroll_speed,
+        scrollPause = dm1.scroll_pause,
+        scrollVertical = dm1.scroll_vertical,
+        onTouch =
+          ; On touch
+          Function(msg)
+            ; Nothing
+          EndFunction,
+          
+        onLongTouch = 
+          ; ADDITIONAL FUNCTION
+          Function(msg)
+            ; Do nothing for now
+          EndFunction
+        
+        })
+      
+      ; Initialize trackers
+      app.newGfxTracker("hour", "")
+      app.newGfxTracker("minute", "")
+      app.newGfxTracker("second", "")
+      app.newGfxTracker("date", "")
+      app.newGfxTracker("info", "")
+      app.newGfxTracker("news", "")
+      
+    Case 2 ; DOT MATRIX CLOCK
+    
+  EndSwitch
+  
+EndFunction
+
+Function app.clock.draw_7Segments()
+  ; Draw the 7 segments clock mode (1)
+  ; ----------------------------------
+  ; Shortcut to the preferences
+  Local prefs     = app.prefs.clock.digital7
+  Local color     = prefs.colors
+  Local dm1_color = app.prefs.newsDotMatrix.colors.normal
+  Local dm2_color = app.prefs.forecastDotMatrix.colors.normal
+  
+  Local data = app.getDate()
+   
+  If app.temp.old_sec <> data.ss
+    app.temp.old_sec = data.ss
+    ResetTimer(1)
+  EndIf
+
+  ; Check auto dimmer, if it dim time then swap the color sets
+  app.temp.IsDimmed = False
+  If prefs.autoDimmer.enabled
+    If ToNumber(data.hh) >= prefs.autoDimmer.onHour Or 
+       ToNumber(data.hh) < prefs.autoDimmer.offHour
+      color = prefs.autoDimmer.colors
+      dm1_color = app.prefs.newsDotMatrix.colors.dimmed    
+      dm2_color = app.prefs.forecastDotMatrix.colors.dimmed
+      app.temp.isDimmed = True
+    EndIf
+  EndIf
+
+  ; ScreenSaver check
+  app.temp.screenSaverCnt = app.temp.screenSaverCnt - 1
+  If app.temp.screenSaverCnt <= 0
+    ; SCREEN SAVER TIME
+    Local scrSaver = app.prefs.screenSaver
+    Local scrTemp  = app.temp.screenSaver
+    app.temp.screenSaverCnt2 = app.temp.screenSaverCnt2 + 1
+    If app.temp.screenSaverCnt2 >= scrSaver.Duration
+      app.temp.screenSaverCnt = scrSaver.Frames
+      app.temp.screenSaverCnt2 = 0
+    Else
+      data.hh = Chr(scrSaver.Anims.h1[scrTemp.Index.h1]) .. Chr(scrSaver.Anims.h2[scrTemp.Index.h2])
+      data.mm = Chr(scrSaver.Anims.m1[scrTemp.Index.m1]) .. Chr(scrSaver.Anims.m2[scrTemp.Index.m2])
+      data.ss = Chr(scrSaver.Anims.s1[scrTemp.Index.s1]) .. Chr(scrSaver.Anims.s2[scrTemp.Index.s2])
+      
+      If app.temp.screenSaverTime <= scrSaver.FrameTime
+        app.temp.screenSaverTime = app.temp.screenSaverTime + 1
+        
+      Else
+        app.temp.screenSaverTime = 0
+        
+        scrTemp.Index.h1 = scrTemp.Index.h1 + 1
+        If TB.Item.IsNil(scrSaver.Anims.h1, scrTemp.Index.h1) Then scrTemp.Index.h1 = 0
+        scrTemp.Index.h2 = scrTemp.Index.h2 + 1
+        If TB.Item.IsNil(scrSaver.Anims.h2, scrTemp.Index.h2) Then scrTemp.Index.h2 = 0
+        scrTemp.Index.m1 = scrTemp.Index.m1 + 1
+        If TB.Item.IsNil(scrSaver.Anims.m1, scrTemp.Index.m1) Then scrTemp.Index.m1 = 0
+        scrTemp.Index.m2 = scrTemp.Index.m2 + 1
+        If TB.Item.IsNil(scrSaver.Anims.m2, scrTemp.Index.m2) Then scrTemp.Index.m2 = 0
+        scrTemp.Index.s1 = scrTemp.Index.s1 + 1
+        If TB.Item.IsNil(scrSaver.Anims.s1, scrTemp.Index.s1) Then scrTemp.Index.s1 = 0
+        scrTemp.Index.s2 = scrTemp.Index.s2 + 1
+        If TB.Item.IsNil(scrSaver.Anims.s2, scrTemp.Index.s2) Then scrTemp.Index.s2 = 0
+        
+      EndIf
+    EndIf
+  EndIf
+  
+  ; Hours, 7 segment direct rendering
+  If app.checkGfxTracker("hour", data.hh)
+    dw.seg7.drawText(
+      { x = prefs.positions.hh[0], 
+        y = prefs.positions.hh[1],
+        scale = prefs.positions.hh[2],
+        colorOn = color[0],
+        colorOff = color[1],
+        edgeColor = color[2],
+        edgeSize = prefs.edge,
+        text = data.hh,
+        length = 2,
+        distance = prefs.distance
+        })
+  EndIf
+  
+  ; Minutes, 7 segment direct rendering
+  If app.checkGfxTracker("minute", data.mm)
+    dw.seg7.drawText(
+      { x = prefs.positions.mm[0], 
+        y = prefs.positions.mm[1],
+        scale = prefs.positions.mm[2],
+        colorOn = color[0],
+        colorOff = color[1],
+        edgeColor = color[2],
+        edgeSize = prefs.edge,
+        text = data.mm,
+        length = 2,
+        distance = prefs.distance
+        })
+  EndIf
+  
+  ; Seconds, 7 segment direct rendering
+  If prefs.showSeconds
+    If app.checkGfxTracker("second", data.ss)
+      dw.seg7.drawText(
+        { x = prefs.positions.ss[0], 
+          y = prefs.positions.ss[1],
+          scale = prefs.positions.ss[2],
+          colorOn = color[0],
+          colorOff = color[1],
+          edgeColor = color[2],
+          edgeSize = prefs.edge,
+          text = data.ss,
+          length = 2,
+          distance = prefs.distance
+          })
+    EndIf
+  EndIf
+  
+  ; Clock flashing Dots
+  Local bx, by, distance, size = prefs.positions.dots[0], prefs.positions.dots[1], prefs.positions.dots[2], prefs.positions.dots[3]
+  Local col = color[0]
+
+  Local gt = GetTimer(1)
+  If gt >= prefs.dotsOnTime
+    col = color[1]   
+  EndIf
+  
+  Box(bx, by, size, size, col)
+  Box(bx, by+distance, size, size, col)
+ 
+  
+  ; Dot Matrix 2 : News
+  ; -------------------
+  ; Set the colors
+  app.temp.dots2.bgColor    = dm1_color.background
+  app.temp.dots2.font.color = dm1_color.font
+  app.temp.dots2.grid.color = dm1_color.grid
+  
+  ; Put the fetched news into the dot matrix contents storage
+  app.temp.dots2.content = app.temp.news
+  
+  ; Current date
+  ;InsertItem(app.temp.dots2.content, data.wd .. ", " ..data.dd .. " " .. data.mo .. " " .. data.yy, 0)
+
+  ; When the index is higher that the max value, stick to the latest item
+  If app.temp.dots2.cIndex > ListItems(app.temp.info)-1
+    app.temp.dots2.cIndex = ListItems(app.temp.info)-1
+  EndIf
+  
+  ; Draw using the gfx tracker to save cpu cycles
+  If app.checkGfxTracker("news", ToString(app.temp.dots2.scrollOffset))
+    app.temp.dots2:draw(True)
+  EndIf
+  
+  ; Scroll the contents
+  app.temp.dots2:scroll(True)
+
+  
+  
+  ; Dot Matrix 1 : Forecast
+  app.temp.dots.bgColor    = dm2_color.background
+  app.temp.dots.font.color = dm2_color.font
+  app.temp.dots.grid.color = dm2_color.grid
+  
+  If app.temp.dots.cIndex > ListItems(app.temp.info)-1
+    app.temp.dots.cIndex = ListItems(app.temp.info)-1
+  EndIf
+  app.temp.dots.content = app.temp.info
+
+  
+  If app.checkGfxTracker("info", ToString(app.temp.dots.scrollOffset))
+    app.temp.dots:draw(True)
+  EndIf
+
+  
+  app.temp.dots:scroll(True)
+  
+  /*
+  ; INFO
+  If app.checkGfxTracker("info", info)
+    dw.seg7.drawText(
+      { x = prefs.positions.info[0], 
+        y = prefs.positions.info[1],
+        scale = prefs.positions.info[2],
+        colorOn = color[0],
+        colorOff = color[1],
+        edgeColor = color[2],
+        edgeSize = prefs.edge,
+        text = ReplaceStr(info, "*", ""),
+        length = prefs.infoLen,
+        distance = prefs.distance
+        })
+  EndIf
+  */
+  
+  ; Dimmer Button
+  If prefs.buttons.dimmer.enabled And app.temp.btnDimmerID.Changed
+    If prefs.buttons.dimmer.pushed
+      If app.temp.IsDimmed
+        DisplayBrush(app.temp.btnDimmerID.On, prefs.buttons.dimmer.position[0], prefs.buttons.dimmer.position[1], { Tint = 255, TintColor = prefs.autoDimmer.Colors[0] })
+      Else
+        DisplayBrush(app.temp.btnDimmerID.On, prefs.buttons.dimmer.position[0], prefs.buttons.dimmer.position[1])
+      EndIf
+    Else
+      If app.temp.IsDimmed
+        DisplayBrush(app.temp.btnDimmerID.Off, prefs.buttons.dimmer.position[0], prefs.buttons.dimmer.position[1], { Tint = 255, TintColor = prefs.autoDimmer.Colors[0] })      
+      Else
+        DisplayBrush(app.temp.btnDimmerID.Off, prefs.buttons.dimmer.position[0], prefs.buttons.dimmer.position[1])
+      EndIf
+    EndIf
+    app.temp.btnDimmerID.Changed = False
+  EndIf
+  
+  ; Clock Mode Button
+  If prefs.buttons.clock_mode.enabled And app.temp.btnClockModeID.Changed
+    If app.temp.IsDimmed
+      DisplayBrush(app.temp.btnClockModeID.On, prefs.buttons.clock_mode.position[0], prefs.buttons.clock_mode.position[1], { Tint = 255, TintColor = prefs.autoDimmer.Colors[0] })
+    Else
+      DisplayBrush(app.temp.btnClockModeID.On, prefs.buttons.clock_mode.position[0], prefs.buttons.clock_mode.position[1])
+    EndIf
+    app.temp.btnClockModeID.Changed = False
+  EndIf
+  
+  app.temp.delayCnt = app.temp.delayCnt + 1
+
+  /*
+  If app.temp.delayCnt >= prefs.scrollDelay
+    app.temp.delayCnt = 0
+    app.temp.info = UnrightStr(app.temp.info, 1) .. LeftStr(app.temp.info, 1)
+  EndIf
+  */
+
+
+  
+EndFunction
+
+Function app.clock.draw()
+  
+  Switch app.clock_mode
+    ;----------------------
+    Case 1  ; DIGITAL CLOCK
+    ;----------------------
+      app.clock.draw_7Segments()
+
+    ;----------------------
+    Case 2  ; DOT MATRIC
+    ;----------------------
+      app.clock.draw_dotMatrix()
+      
+      
+  EndSwitch
+  
+EndFunction
+
+BeginDoubleBuffer()
+
+/*
+Local t = "HELLO MY NAME IS FABIO          "
+Local a = 0
+;SetFormStyle(#EDGE, $000000, 1)
+For i = 0 To 500
+  ;app.screen.Clear()
+  a = a + 1
+  If a >= 20
+    t = UnrightStr(t, 1) .. LeftStr(t, 1)
+    a = 0
+  EndIf
+
+  dw.seg7.drawText(
+    { x = 25, y = 100, scale = 1.8,
+      colorOn = $FFFFFF, colorOff = $D0111111,
+      text = t,
+      length = 5,
+      distance = 1.5,
+      edgeColor = $000000,
+      edgeSize = 0.5
+      })
+
+  Flip(True)
+Next 
+
+  ; args
+  ;   x, y     : Position
+  ;   scale    : Scale factor
+  ;   colorOn  : On Color
+  ;   colorOff : Off Color
+  ;   text     : character to show
+  ;   start    : start position
+  ;   length   : how many characters
+  ;   distance : display distance %
+
+
+For Local i = 0 To 9
+  app.screen.Clear()
+  dw.seg7.drawChar(
+    { x = 100, y = 100, scale = 4,
+      colorOn = $FFFFFF, colorOff = $111111,
+      character = ToString(i) })
+  Flip()
+  Wait(200, #MILLISECONDS)
+Next
+
+For Local i = 0 To 25
+  app.screen.Clear()
+  dw.seg7.drawChar(
+    { x = 100, y = 100, scale = 4,
+      colorOn = $FFFFFF, colorOff = $111111,
+      character = ToString(Chr(Asc("A")+i)) })
+  Flip()
+  Wait(200, #MILLISECONDS)
+Next
+
+*/
+
+Function app.getNews()
+
+  ExitOnError(False)
+  Local feed = DownloadFile(app.config.news.feed_url)
+  Local e = GetLastError()
+  ExitOnError(True)
+
+  If e <> 0
+    info =
+      { "{:FNS:-2}",
+        st.fetchError .. ":" .. e,
+        GetErrorName(e),
+        "{:FNS:+2}"
+        }
+    app.temp.news = info
+
+    Return({})
+  EndIf
+
+  Local tags = {}
+  Local t = HL.CutBetweenLimits(feed, "<item>", "</item>", tags)
+
+  Local news, data = {}, {}
+  For i, v In Pairs(tags)
+    news[i] = { title = "",
+                description = "",
+                link = "",
+                enclosure = "",
+                category = "",
+                pubdate = "" }
+    Local title      = HL.GetBetweenLimits(v, "<title>", "</title>")
+    Local description = HL.GetBetweenLimits(v, "<description>", "</description>")
+    Local link       = HL.GetBetweenLimits(v, "<link>", "</link>")
+    Local enclosure  = HL.GetBetweenLimits(v, "<enclosure>", "/>")
+    Local category   = HL.GetBetweenLimits(v, "<category>", "</category>")
+    Local pubdate    = HL.GetBetweenLimits(v, "<pubDate>", "</pubDate>")
+
+    If TB.Item.Exists(title, 0) Then news[i].title = title[0]
+    If TB.Item.Exists(description, 0) Then news[i].description = description[0]
+    If TB.Item.Exists(link, 0) Then news[i].link = link[0]
+    If TB.Item.Exists(enclosure, 0) Then news[i].enclosure = enclosure[0]
+    If TB.Item.Exists(category, 0) Then news[i].category = category[0]
+    If TB.Item.Exists(pubdate, 0) Then news[i].pubdate = pubdate[0]
+    news[i].pubdate = ReplaceStr(news[i].pubdate, " +0100", "")
+    news[i].pubdate = ReplaceStr(news[i].pubdate, " Jan ", "/01/")
+    news[i].pubdate = ReplaceStr(news[i].pubdate, " Feb ", "/02/")
+    news[i].pubdate = ReplaceStr(news[i].pubdate, " Mar ", "/03/")
+    news[i].pubdate = ReplaceStr(news[i].pubdate, " Apr ", "/04/")
+    news[i].pubdate = ReplaceStr(news[i].pubdate, " May ", "/05/")
+    news[i].pubdate = ReplaceStr(news[i].pubdate, " Jun ", "/06/")
+    news[i].pubdate = ReplaceStr(news[i].pubdate, " Jul ", "/07/")
+    news[i].pubdate = ReplaceStr(news[i].pubdate, " Aug ", "/08/")
+    news[i].pubdate = ReplaceStr(news[i].pubdate, " Sep ", "/09/")
+    news[i].pubdate = ReplaceStr(news[i].pubdate, " Oct ", "/10/")
+    news[i].pubdate = ReplaceStr(news[i].pubdate, " Nov ", "/11/")
+    news[i].pubdate = ReplaceStr(news[i].pubdate, " Dec ", "/12/")
+    news[i].pubdate = ReplaceStr(news[i].pubdate, "Mon, ", "")
+    news[i].pubdate = ReplaceStr(news[i].pubdate, "Thu, ", "")
+    news[i].pubdate = ReplaceStr(news[i].pubdate, "Tue, ", "")
+    news[i].pubdate = ReplaceStr(news[i].pubdate, "Fri, ", "")
+    news[i].pubdate = ReplaceStr(news[i].pubdate, "Wed, ", "")
+    news[i].pubdate = ReplaceStr(news[i].pubdate, "Sat, ", "")
+    news[i].pubdate = ReplaceStr(news[i].pubdate, "Sun, ", "")
+    
+    
+    For k, m In Pairs(news[i])
+      news[i][k] = ReplaceStr(news[i][k], "<![CDATA[", "")
+      news[i][k] = ReplaceStr(news[i][k], "]]>", "")
+    Next
+    news[i].pubdate = UnleftStr(news[i].pubdate, 3)
+
+    data[i] = news[i].pubdate .. ", " .. news[i].title
+    If ReplaceStr(news[i].description, " ", "") <> ""
+      data[i] = data[i] .. " " .. news[i].description
+    EndIf
+  Next
+
+  ; Wrap the data table to adapt it to the display vertical size
+  ; only if it's a vertical scroll, the message could be longer
+  ; than the display lines.
+  If app.temp.dots2.scrollVertical
+    Local dWidth  = app.temp.dots2.buffersize.w
+    Local dHeight = app.temp.dots2.buffersize.h
+    Local fHeight = app.temp.dots2.font.size
+    Local linesVisible = Int((dHeight/fHeight)+0.5)    
+    
+    ; In order to measure the text we have to apply the font
+    UseFont(app.temp.dots2.fontId)
+    SetFontStyle(app.temp.dots2.font.style)
+    Local i = 0
+    While i <= ListItems(data)-1
+      Local wrapped = GFX.Text.WordWrap(data[i], dWidth - TextWidth("..."))
+      If ListItems(wrapped) > linesVisible
+        ; Create a new entry
+        Local PartA, PartB = "", "..."
+        For Local i = 0 To linesVisible-1
+          PartA = PartA .. wrapped[i] .. " "
+        Next
+        PartA = PartA .. "..."
+        For Local i = linesVisible To ListItems(wrapped)-1
+          PartB = PartB .. wrapped[i] .. " "
+        Next
+        data[i] = PartA
+        InsertItem(data, PartB, i+1)
+        ;i = i + 1
+      EndIf
+      i = i + 1
+
+    Wend
+  EndIf
+  
+  app.temp.news = data
+  
+EndFunction
+
+app.clock.init()
+app.getWeather()
+app.getNews()
+
+StartTimer(1)
+app.mainIntervalID    = SetInterval(Nil, app.screen.draw, app.prefs.refresh)
+app.weatherIntervalID = SetInterval(Nil, app.getWeather, app.prefs.weatherRefresh)
+app.newsIntervalID    = SetInterval(Nil, app.getNews, 30*60*1000)
+
+Repeat
+  WaitEvent()
+Forever
+

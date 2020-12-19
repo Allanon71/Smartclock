@@ -1,0 +1,13 @@
+; ------------------------------------------------------------
+; DONWOLOAD MY LIBRARIES FROM :
+; https://github.com/Allanon71/Hollywood-MAL-Libraries
+;
+; Configure the +Includes.hws file and put its full path below.
+; ------------------------------------------------------------
+@INCLUDE "=== PUT HERE THE PATH TO +Includes.hws FILE ==="
+@INCLUDE #INC_TABLES
+@INCLUDE #INC_DEBUG
+@INCLUDE #INC_FILESYS
+@INCLUDE #INC_JSON
+@INCLUDE #INC_GFX
+@INCLUDE "DigitalWorld.hws"
