@@ -182,7 +182,7 @@
   // === IMPORTANT ===
   // Replace this key with your key, it's free, and you can obtain it in 
   // few minutes!
-  [SST]apikey = d6d1b58b7bfb61eac9bb32f326f1ceaa
+  [SST]apikey = your_api_key_here
   [SST]language = it
   [SST]units = metric
   [SFL]latitude = 42.24
