@@ -13,6 +13,8 @@ app.mode        = 1          ; 1 = CLOCK MODE
 app.clock_mode  = 1          ;   1 = DIGITAL CLOCK
                              ;   2 = DOT MATRIX
 
+; PREFERENCES TABLE
+; -----------------
 app.prefs =
   ; RENDERING PREFS
   { refresh        = 20,               ; Frequency in ms
@@ -24,19 +26,20 @@ app.prefs =
   ; WEATHER PREFS (picked from the config file)
     weather = { },
     
-  ; SCREENSAVER (durations depends on the refresh time, values are expressed in frames)
+  ; SCREENSAVER (durations depends on the refresh time, values are expressed
+  ;              in frames)
     screenSaver =
-    { Frames    = 22500,
-      Duration  = 200,       
-      FrameTime = 3,
-      Anim = { 197, 198, 199, 200, 201, 202 },
+    { Frames    = 22500,                        ; Screen Saver timeout in frames
+      Duration  = 200,                          ; Screen Saver duration in frames
+      FrameTime = 3,                            ; Screen Saver anim frame duration in frames
+      Anim = { 197, 198, 199, 200, 201, 202 },  ; Animation 
       Anims =
-        { h1 = { 197, 198, 199,  32,  32,  32,  32,  32,  32,  32,  32, 202 },
-          h2 = {  32,  32,  32, 199,  32,  32,  32,  32,  32,  32, 202,  32 },
-          m1 = {  32,  32,  32,  32, 199,  32,  32,  32,  32, 202,  32,  32 },
-          m2 = {  32,  32,  32,  32,  32, 199, 200, 201, 202,  32,  32,  32 },
-          s1 = { 200, 201, 202, 197, 198, 199,  32,  32,  32,  32,  32,  32 },
-          s2 = { 198, 197, 202, 201, 200, 199,  32,  32,  32,  32,  32,  32 }
+        { h1 = { 197, 198, 199,  32,  32,  32,  32,  32,  32,  32,  32, 202 },  ; Hour, first digit
+          h2 = {  32,  32,  32, 199,  32,  32,  32,  32,  32,  32, 202,  32 },  ; Hour, second digit
+          m1 = {  32,  32,  32,  32, 199,  32,  32,  32,  32, 202,  32,  32 },  ; Minute, first digit
+          m2 = {  32,  32,  32,  32,  32, 199, 200, 201, 202,  32,  32,  32 },  ; Minute, second digit
+          s1 = { 200, 201, 202, 197, 198, 199,  32,  32,  32,  32,  32,  32 },  ; Second, first digit
+          s2 = { 198, 197, 202, 201, 200, 199,  32,  32,  32,  32,  32,  32 }   ; Second, second digit
           },
       },
       
@@ -50,23 +53,42 @@ app.prefs =
       },
       
     ;-----------------------------------------------------------------------
-    clock =                             ; CLOCK VARIATIONS
+    clock =                                   ; CLOCK VARIATIONS
     ;-----------------------------------------------------------------------
     { dotMatrix =
-      { buffer = { 160, 96 },          ; Real buffer width & height
-        clearColor = $E0202034,        ; Background color
-        gridColor = $00000000,         ; Simulated grid color
-        gridSize = 1,                  ; Simulated grid size
+      { buffer = { 160, 96 },                 ; Real buffer width & height
+        clearColor = $C0202034,               ; Background color
+        gridColor = $00000000,                ; Simulated grid color
+        gridSize = 1,                         ; Simulated grid size
         font = 
-          { name = "data/droid.ttf",
-            style = #BOLD+#ANTIALIAS,
-            color = $FFFFFF
+          { name = "data/droid.ttf",          ; Font to use
+            style = #BOLD+#ANTIALIAS,         ; Font style
+            color = $FFFFFF                   ; Font color
             },
         positions =
-          { time = { #CENTER, -2, 42 },      ; x, y, font size
-            date = { #CENTER, 32, 14 },      ; x, y, font size
+          { time = { #CENTER, -2, 42 },       ; x, y, font size
+            date = { #CENTER, 30, 14 },       ; x, y, font size
+            weather = { 0, 40, 17 },
+            news = { 0, 54, 14 },
             },
-        dotsOnTime = 150,
+            
+        dotsOnTime = 150,                     ; Clock dots ON-time
+        
+        weather =
+          { offset = 0,
+            scrollSpeed = 0.5 },
+
+        news =
+          { offset = 0,
+            scrollSpeed = 0.5, 
+            idx = 0,
+            interline = 10,
+            t = 0,
+            delay = 250 },
+        
+        vwait = True,
+        blur  = False,
+        
         anims =
           { { id     = -1,
               frame  = -1,
@@ -83,6 +105,8 @@ app.prefs =
 
       ;------------------------------------------------------------
       digital7 =                            ; SEVEN SEGMENTS DIGITAL CLOCK
+                                            ; This is the clock that is showed by default
+                                            ; at startup.
       ;------------------------------------------------------------
       { positions =                         ; ---- ITEM GEOMETRIES ----
         { hh = { 30, 40, 2.7 },             ; HOUR         x, y, scale
@@ -443,16 +467,50 @@ app.temp.screenSaverCnt = app.prefs.screenSaver.Frames
 app.prefs.newsDotMatrix = app.config.news_display
 ; Dot Matrix 2
 app.prefs.forecastDotMatrix = app.config.forecast_display
+; Background Fader
+app.prefs.bgFader = app.config.bgfader
+app.prefs.bgFader.inc_red = app.prefs.bgFader.inc_red * app.prefs.bgFader.speed_mul
+app.prefs.bgFader.inc_green = app.prefs.bgFader.inc_green * app.prefs.bgFader.speed_mul
+app.prefs.bgFader.inc_blue = app.prefs.bgFader.inc_blue * app.prefs.bgFader.speed_mul
+
+Local dm = app.prefs.clock.dotmatrix
+dm.buffer[0] = app.config.clock_dotmatrix.buffer.width
+dm.buffer[1] = app.config.clock_dotmatrix.buffer.height
+dm.clearcolor = app.config.clock_dotmatrix.background.clear_color
+dm.gridcolor = app.config.clock_dotmatrix.background.grid_color
+dm.gridsize = app.config.clock_dotmatrix.background.grid_size
+dm.font = app.config.clock_dotmatrix.font
+dm.positions.time[0] = app.config.clock_dotmatrix.geometries.time.x
+dm.positions.time[1] = app.config.clock_dotmatrix.geometries.time.y
+dm.positions.time[2] = app.config.clock_dotmatrix.geometries.time.size
+dm.positions.date[0] = app.config.clock_dotmatrix.geometries.date.x
+dm.positions.date[1] = app.config.clock_dotmatrix.geometries.date.y
+dm.positions.date[2] = app.config.clock_dotmatrix.geometries.date.size
+dm.positions.weather[0] = app.config.clock_dotmatrix.geometries.weather.x
+dm.positions.weather[1] = app.config.clock_dotmatrix.geometries.weather.y
+dm.positions.weather[2] = app.config.clock_dotmatrix.geometries.weather.size
+dm.positions.news[0] = app.config.clock_dotmatrix.geometries.news.x
+dm.positions.news[1] = app.config.clock_dotmatrix.geometries.news.y
+dm.positions.news[2] = app.config.clock_dotmatrix.geometries.news.size
+dm.dotsontime = app.config.clock_dotmatrix.dots_on_time
+dm.weather.scrollSpeed = app.config.clock_dotmatrix.geometries.weather.scroll_speed
+dm.news.delay = app.config.clock_dotmatrix.geometries.news.delay
+dm.news.interline = app.config.clock_dotmatrix.geometries.news.interline
+dm.vwait = app.config.clock_dotmatrix.wait_vbl
+dm.blur = app.config.clock_dotmatrix.blur
 
 Global xres, yres = app.config.screen.xres, app.config.screen.yres
 
-app.screen = {}
-Function app.screen.Clear()
+
+
+app.screen = {}                               ; Where screen related functions are stored
+Function app.screen.Clear(cl)
   ; Clear the entire display
   ; ------------------------
+  If IsNil(cl) Then cl = $000000
   SetFillStyle(#FILLCOLOR)
-  Box(0, 0, xres, yres, $000000)
-  
+  Box(0, 0, xres, yres, cl)
+
 EndFunction
 
 Function app.screen.draw()
@@ -502,53 +560,78 @@ Function app.clock.draw_dotMatrix()
     t = ReplaceStr(t, ":", " ")   
   EndIf
   
+  For i, v In Pairs(app.temp.info)
+    If LeftStr(v, 1) = "{" Then app.temp.info[i] = ""
+  Next
+    
+  Local weather = TB.Convert.Table2String(app.temp.info, " - ")
+
   ; Create a buffer brush
-  Local bid = CreateBrush(Nil, prefs.buffer[0], prefs.buffer[1], #BLACK, { AlphaChannel = True, Clear = True })
-  
+  Local bid = prefs.bidBG
+
   ; Prepare to draw stuff
   SelectBrush(bid, #SELMODE_COMBO, 2)
+    ; Clear the buffer
     SetFillStyle(#FILLCOLOR)
     Box(0, 0, prefs.buffer[0], prefs.buffer[1], prefs.clearColor)
+    
+    ; Render the clock
     OpenFont(1, prefs.font.name, prefs.positions.time[2], { Engine = #FONTENGINE_INBUILT } )
     UseFont(1)
     SetFontStyle(prefs.font.style)
     SetFontColor(prefs.font.color)
     TextOut(prefs.positions.time[0], prefs.positions.time[1], t)
     
+    ; Render the date
     OpenFont(1, prefs.font.name, prefs.positions.date[2], { Engine = #FONTENGINE_INBUILT } )
     UseFont(1)
     TextOut(prefs.positions.date[0], prefs.positions.date[1], wd .. ", " .. dd .. " " .. mo .. " " .. yy)
+
+    ; Render the weather
+    OpenFont(1, prefs.font.name, prefs.positions.weather[2], { Engine = #FONTENGINE_INBUILT } )
+    UseFont(1)
+    TextOut(prefs.positions.weather[0] + prefs.weather.offset, prefs.positions.weather[1], weather)
+    prefs.weather.offset = prefs.weather.offset - prefs.weather.scrollSpeed
+    If -prefs.weather.offset > TextWidth(weather)
+      prefs.weather.offset = prefs.buffer[0]
+    EndIf
     
+    ; Render the news
+    Local news = app.temp.news[prefs.news.idx]
+    OpenFont(1, prefs.font.name, prefs.positions.news[2], { Engine = #FONTENGINE_INBUILT } )
+    UseFont(1)
+    Local toprint = GFX.Text.WordWrap(news, prefs.buffer[0]-4)
+    
+    Local y = prefs.positions.news[1]
+    For Local i = 0 To ListItems(toprint)-1
+      If LeftStr(toprint[i], 1) <> "{"
+        TextOut(prefs.positions.news[0] + prefs.news.offset, y, toprint[i])
+        y = y + prefs.news.interline
+      EndIf
+    Next
+    
+    ; Check timer
+    prefs.news.t = prefs.news.t + 1
+    If prefs.news.t > prefs.news.delay
+      prefs.news.t = 0
+      prefs.news.idx = prefs.news.idx + 1
+      If TB.Item.IsNil(app.temp.news, prefs.news.idx) Then prefs.news.idx = 0
+    EndIf
+        
   EndSelect
   
   ; Scale to the screen size
-  ScaleBrush(bid, xres, yres, False)
-  
-  ; Draw the grid
-  If prefs.gridSize > 0
-    SelectBrush(bid, #SELMODE_COMBO, 2)
-      Local sizew, sizeh = xres/prefs.buffer[0], yres/prefs.buffer[1]
-      Local y = 0
-      For Local c = 0 To prefs.buffer[1]
-        Line(0, y, xres, y, prefs.gridColor, { Thickness = prefs.gridSize })
-        y = y + sizeh
-        
-      Next
-      
-      Local x = 0
-      For Local r = 0 To prefs.buffer[0]
-        Line(x, 0, x, yres, prefs.gridColor, { Thickness = prefs.gridSize })
-        x = x + sizew
-        
-      Next
-      
-    EndSelect  
-  EndIf
-  
-  ; Render to the screen
-  DisplayBrush(bid, 0, 0)
+  Local tbid = CopyBrush(bid, Nil)
+  ScaleBrush(tbid, xres, yres, prefs.blur)
 
-  FreeBrush(bid)
+  ; Render to the screen
+  DisplayBrush(tbid, 0, 0)
+  FreeBrush(tbid)
+  
+  DisplayBrush(prefs.bidGrid, 0, 0)
+
+  If prefs.vwait Then VWait()
+  
 EndFunction
 
 Function app.setTempInfo(info)
@@ -631,6 +714,11 @@ Function app.cbClockMode()
   
     Case 2
       app.clock_mode = 1
+      EndDoubleBuffer()
+      DeleteButton(app.temp.btnClockModeID.btn)
+      BeginDoubleBuffer()
+      app.temp.btnDimmerID.Changed = True
+      app.temp.btnClockModeID.Changed = True
       app.clock.init()
 
   EndSwitch
@@ -785,6 +873,14 @@ Function app.clock.init()
         
         })
       
+      ; Bg Fader Init
+      Local bgf = app.config.bgFader
+      app.bgFaderColor = 
+        { bgf.start_red, 
+          bgf.start_green, 
+          bgf.start_blue }
+      app.bgfCurrent = RGB(app.bgFaderColor[0], app.bgFaderColor[1], app.bgFaderColor[2])
+      
       ; Initialize trackers
       app.newGfxTracker("hour", "")
       app.newGfxTracker("minute", "")
@@ -794,7 +890,42 @@ Function app.clock.init()
       app.newGfxTracker("news", "")
       
     Case 2 ; DOT MATRIX CLOCK
-    
+      app.newGfxTracker("screen", "")
+      
+      Local prefs = app.prefs.clock.dotMatrix
+      prefs.bidBG   = CreateBrush(Nil, prefs.buffer[0], prefs.buffer[1], #BLACK, { AlphaChannel = True, Clear = True })
+      prefs.bidGrid = CreateBrush(Nil, xres, yres, #BLACK, { AlphaChannel = True, Clear = True })
+      
+      ; Draw the grid
+      If prefs.gridSize > 0
+        SelectBrush(prefs.bidGrid, #SELMODE_COMBO, 2)
+          Local sizew, sizeh = xres/prefs.buffer[0], yres/prefs.buffer[1]
+
+          Local y = 0
+          For Local c = 0 To prefs.buffer[1]
+            Line(0, y, xres, y, prefs.gridColor, { Thickness = prefs.gridSize })
+            y = y + sizeh
+            
+          Next
+          
+          Local x = 0
+          For Local r = 0 To prefs.buffer[0]
+            Line(x, 0, x, yres, prefs.gridColor, { Thickness = prefs.gridSize })
+            x = x + sizew
+            
+          Next
+          
+        EndSelect  
+        
+      EndIf
+      
+      ; Change clock area
+      Local yfactor = yres/prefs.buffer[1]
+      app.temp.btnClockModeID.btn = 
+        MakeButton(Nil, #SIMPLEBUTTON, 
+                   0, 0, xres, prefs.positions.time[2]*yfactor,
+                   { OnMouseUp = app.cbClockMode })
+
   EndSwitch
   
 EndFunction
@@ -814,7 +945,7 @@ Function app.clock.draw_7Segments()
     app.temp.old_sec = data.ss
     ResetTimer(1)
   EndIf
-
+  
   ; Check auto dimmer, if it dim time then swap the color sets
   app.temp.IsDimmed = False
   If prefs.autoDimmer.enabled
@@ -824,9 +955,76 @@ Function app.clock.draw_7Segments()
       dm1_color = app.prefs.newsDotMatrix.colors.dimmed    
       dm2_color = app.prefs.forecastDotMatrix.colors.dimmed
       app.temp.isDimmed = True
+      
+      ; Check BG Fader
+      If app.config.bgFader.enabled
+        Local bgfader = app.bgFaderColor
+        
+        bgFader[0] = bgFader[0] + app.config.bgFader.inc_Red
+        bgFader[1] = bgFader[1] + app.config.bgFader.inc_Green
+        bgFader[2] = bgFader[2] + app.config.bgFader.inc_Blue
+        
+        If bgFader[0] > app.config.bgFader.end_Red
+          bgFader[0] = app.config.bgFader.end_Red
+          app.config.bgFader.inc_Red = -app.config.bgFader.inc_Red
+        ElseIf bgFader[0] < 0
+          bgFader[0] = 0
+          app.config.bgFader.inc_Red = -app.config.bgFader.inc_Red
+        EndIf
+        
+        If bgFader[1] > app.config.bgFader.end_Green
+          bgFader[1] = app.config.bgFader.end_Green
+          app.config.bgFader.inc_Green = -app.config.bgFader.inc_Green
+        ElseIf bgFader[1] < 0
+          bgFader[1] = 0
+          app.config.bgFader.inc_Green = -app.config.bgFader.inc_Green
+        EndIf
+        
+        If bgFader[2] > app.config.bgFader.end_Blue
+          bgFader[2] = app.config.bgFader.end_Blue
+          app.config.bgFader.inc_Blue = -app.config.bgFader.inc_Blue
+        ElseIf bgFader[2] < 0
+          bgFader[2] = 0
+          app.config.bgFader.inc_Blue = -app.config.bgFader.inc_Blue
+        EndIf
+        
+
+        Local bgColor = ARGB(app.config.bgFader.alpha_level, RGB(bgfader[0], bgfader[1], bgfader[2]))
+        
+        If app.bgfCurrent <> bgColor
+        
+          Local newCol = HL.Color:New()
+          newCol:fromValue(bgColor)
+          color[0] = newCol:toRGBValue()
+          newCol:Darken(60)
+          color[1] = newCol:toARGBValue()
+          newCol:Darken(20)
+          color[2] = newCol:toRGBValue()
+          
+          dm1_color.background = newCol:toARGBValue()
+          dm1_color.font = Color[0]
+          dm2_color.background = newCol:toARGBValue()
+          dm2_color.font = Color[0]
+          
+          newCol = Nil
+          
+          ;app.screen.clear(bgColor)
+          
+          app.newGfxTracker("hour", "")
+          app.newGfxTracker("minute", "")
+          app.newGfxTracker("second", "")
+          ;app.newGfxTracker("date", "")
+          app.newGfxTracker("info", "")
+          app.newGfxTracker("news", "")
+
+          app.bgfCurrent = bgColor
+          
+        EndIf
+      EndIf
+      
     EndIf
   EndIf
-
+  
   ; ScreenSaver check
   app.temp.screenSaverCnt = app.temp.screenSaverCnt - 1
   If app.temp.screenSaverCnt <= 0
@@ -1029,7 +1227,6 @@ Function app.clock.draw_7Segments()
   EndIf
   */
 
-
   
 EndFunction
 
@@ -1113,6 +1310,8 @@ Next
 
 Function app.getNews()
 
+  Local st = app.prefs.weather.strings
+  
   ExitOnError(False)
   Local feed = DownloadFile(app.config.news.feed_url)
   Local e = GetLastError()

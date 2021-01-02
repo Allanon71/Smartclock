@@ -34,7 +34,57 @@
 
 // Clock
 // -----
+{ clock_dotmatrix
+  // Clock Type : 2
+  { buffer
+    // Dot Matrix Display Resolution
+    [SIN]width = 160
+    [SIN]height = 96
+    }
+  { background
+    [SCL]clear_color = $C0202034
+    [SCL]grid_color = $00000000
+    [SIN]grid_size = 1
+    }
+  { font
+    [FNN]name = data/droid.ttf
+    [CNS]style = #BOLD+#ANTIALIAS
+    [SCL]color = $00FFFFFF
+    }
+  { geometries
+    { time
+      [CNS]x = #CENTER
+      [SIN]y = -2
+      [SIN]size = 42
+      }
+    { date
+      [CNS]x = #CENTER
+      [SIN]y = 30
+      [SIN]size = 14
+      }
+    { weather
+      [SIN]x = 0
+      [SIN]y = 40
+      [SIN]size = 17
+      [SFL]scroll_speed = 0.75
+      }
+    { news
+      [SIN]x = 0
+      [SIN]y = 57
+      [SIN]size = 14
+      [SIN]delay = 250
+      [SIN]interline = 10
+      }
+    }
+    
+  [SIN]dots_on_time = 150
+  [SBL]wait_vbl = 1
+  [SBL]blur = 0
+  
+  }
+  
 { clock_elements
+  // Clock Type : 1
   { hours_digit
     // Hours digits position and scaling factor
     [SIN]x = 30
@@ -90,7 +140,7 @@
     [SIN]x = 720
     [SIN]y = 20
     [SIN]width = 60
-    [SIN]height = 60
+    [SIN]height = 60    
     }
 
   // Change clock mode button  
@@ -114,7 +164,7 @@
   [SIN]on_hour = 19
   [SIN]off_hour = 8
 
-  // Segments alternative color set
+  // Segments alternative color set (when fader is disabled)
   { colors
     [SCL]fill_on  = $AA8844
     [SCL]fill_off = $E00C0C00
@@ -131,12 +181,10 @@
   
   //   Put here the weekdays shortcuts in your native language
   [MST]local_wdshort  = LUN,MAR,MER,GIO,VEN,SAB,DOM
-  
-  //   Error string
-  [SST]fetcherror = Errore
 
   { weather
     // Translate into your native language these strings
+    [SST]fetcherror = Errore
     [SST]meteo = METEO
     [SST]wind = Vento
     [SST]speed = Km/h
@@ -182,7 +230,7 @@
   // === IMPORTANT ===
   // Replace this key with your key, it's free, and you can obtain it in 
   // few minutes!
-  [SST]apikey = your_api_key_here
+  [SST]apikey = d6d1b58b7bfb61eac9bb32f326f1ceaa
   [SST]language = it
   [SST]units = metric
   [SFL]latitude = 42.24
@@ -235,6 +283,24 @@
   [SIN]anim_frame_duration = 4
   }
   
+// Clock Fader (Works only when dimmed)
+// Increase CPU usage because refreshes the clock
+// at every frame
+{ bgfader
+  [SBL]enabled = 1
+  [SIN]start_red = 75
+  [SIN]start_green = 50
+  [SIN]start_blue = 100
+  [SFL]inc_red = 0.141
+  [SFL]inc_green = 0.035
+  [SFL]inc_blue = 0.229
+  [SIN]end_red = 170
+  [SIN]end_green = 140
+  [SIN]end_blue = 130
+  [SIN]alpha_level = 220
+  [SFL]speed_mul = 0.1
+  }
+
 // News Dot Matrix
 // ---------------
 // New display is defined here
